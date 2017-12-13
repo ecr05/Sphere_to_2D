@@ -14,9 +14,6 @@ import os
 
 import numpy as np
 import copy
-from scipy.ndimage.interpolation import map_coordinates
-from scipy.ndimage.filters import gaussian_filter
-from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt 
 import Interpolation as intp
 
@@ -51,148 +48,6 @@ def normalize(data):
          print('isnan2')
 
     return datanormed
-
-
-# def zero_labels(label_image, label_list):
-#     """
-#         Filter hi-dimensional label image to leave subset of labels to test/train on
-#
-#         Parameters
-#         ----------
-#         label_image : the label file as np array
-#         label_list  : the list of labels to test/train on
-#
-#         Returns
-#         -------
-#         float32 np.array
-#     """
-#     new_image = copy.deepcopy(label_image)*0
-#
-#     new_label = []
-#     for l,label in enumerate(label_list):
-#         x = np.where(label_image == label)
-#
-#         new_image[x] = l+1
-#         new_label.append(l+2)
-#
-#     return new_image, new_label
-
-
-# def elastic_transform(labels, features, alpha, sigma, random_state=None):
-#     """Elastic deformation of images as described in [Simard2003]_.
-#
-#
-#     .. [Simard2003] Simard, Steinkraus and Platt, "Best Practices for
-#        Convolutional Neural Networks applied to Visual Document Analysis", in
-#        Proc. of the International Conference on Document Analysis and
-#        Recognition, 2003.
-#
-#        Parameters
-#        ----------
-#        labels : the label file as np.array
-#        features  : the multivariate features as np.array
-#        alpha : scaling
-#        sigma : smoothing
-#        random_state : initialisation of random number generator
-#
-#        Returns
-#         -------
-#        newlabels: deformed labels
-#        newdata: deformed features
-#
-#     """
-#
-#     assert len(labels.shape) == 2
-#
-#     if random_state is None:
-#         random_state = np.random.RandomState(None)
-#
-#     shape = labels.shape
-#     dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
-#     dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
-#     x, y = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
-#     indices = np.reshape(x + dx, (-1, 1)), np.reshape(y + dy, (-1, 1))
-#     indicesorig = np.reshape(x, (-1, 1)), np.reshape(y, (-1, 1))
-#
-#     newdata = np.zeros((features.shape[0], features.shape[1], features.shape[2]))
-#
-#     # interpolate data using spline interpolation
-#     for i in np.arange(features.shape[2]):
-#         newdata[:, :, i] = map_coordinates(features[:, :, i], indices, order=1).reshape(shape)
-#
-#     indexorigarray = np.transpose(np.asarray(indicesorig)[:, :, 0])
-#     indexarray = np.transpose(np.asarray(indices)[:, :, 0])
-#     imageflat = np.reshape(labels, (shape[0] * shape[1], 1))
-#
-#     slicemap = newdata[:, :, 0]
-#     # interpolate labels using spline interpolation
-#     nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(indexorigarray)
-#     distances, NNindices = nbrs.kneighbors(indexarray)
-#     newlabels = np.zeros((len(indexarray), 1))
-#     for i in np.arange(len(indexarray)):
-#         newlabels[i] = imageflat[NNindices[i]]
-#
-#     newlabels2 = newlabels.reshape(shape)
-#     newlabels2[np.where(slicemap == 0)] = 0
-#
-#     return newlabels2, newdata
-
-
-# def get_patch_centres(group_labels, examples, image_size, patch_size, mean_sim=None, sim_instance=None):
-#     """
-#        select centres for patches randomly
-#
-#        Parameters
-#        ----------
-#        group_labels : use group average labels
-#        examples:  number of patch examples to be drawn
-#        image_size: original image size
-#        patch_size: dimensions of patch to be extracted
-#        mean_sim : correlation of single subject features with that of the group
-#        sim_instance  : mean correlation across the group
-#
-#        Returns
-#        -------
-#        float32 np.array
-#    """
-#
-#     if group_labels is True:
-#         if mean_sim is None or sim_instance is None:
-#             sys.exit("use of group labels requires feature correlation maps")
-#
-#     randh = np.arange(image_size[0] - patch_size[0])
-#     randw = np.arange(image_size[1] - patch_size[1])
-#     np.random.shuffle(randh)
-#     np.random.shuffle(randw)
-#
-#     randh2 = []
-#     randw2 = []
-#
-#     i = 0
-#     # print('num_examples',n_examples, _comparetogroup,_switch)
-#     while len(randh2) < examples:
-#         h = randh[i]
-#         w = randw[i]
-#
-#         if group_labels == True:
-#             # if comparing to group then only pick training samples where the featurespace is close to that of group mean - as described in Nature paper
-#             corrpatch = sliceplane(np.expand_dims(sim_instance, axis=2), h, w, patch_size[0],patch_size[1])
-#             meancorrpatch = sliceplane(np.expand_dims(mean_sim, axis=2), h, w, patch_size[0],patch_size[1])
-#             if np.mean(corrpatch) >= 0.9 * np.mean(meancorrpatch):
-#                 if h not in randh2:
-#                     if w not in randw2:
-#                         randh2.append(h)
-#                         randw2.append(w)
-#             if i == examples * 2:
-#                 randh2 = randh[:examples]
-#                 randw2 = randw[:examples]
-#
-#             i += 1
-#         else:
-#             randh2 = randh[:examples]
-#             randw2 = randw[:examples]
-#
-#     return np.column_stack((randh2, randw2))
 
 
 def rodrigues_rotation(origin,newpt):
@@ -257,6 +112,63 @@ def rotate(rotation, coords):
     coordsrot = np.dot(rotation,np.transpose(coords));
     return np.transpose(coordsrot)
 
+def rescale_labels(labels,labelfunc):
+    # rest original label indexing
+    func=copy.deepcopy(labelfunc)
+    for l,label in enumerate(labels):
+       
+        x = np.where(labelfunc == l+1)#[0]
+        func[(x)]=label
+    
+    return func
+
+def zero_labels(labels,labelfunc):
+    # labels must index concurrently from 0
+    func=copy.deepcopy(labelfunc)
+    func = func * 0
+    newlabel=[]
+    for l,label in enumerate(labels):
+       
+        x = np.where(labelfunc == label)#[0]
+
+        func[(x)]=l+1
+        newlabel.append(l+2)
+
+    
+    return func,newlabel
+
+def invert_projection_test(data2D,coords,interp,nlats,nlons,lons):
+ 
+    
+    DATA=np.zeros((coords.shape[0],data2D.shape[2]))
+    
+    # fill data with cortical features
+    for x,index in enumerate(coords):
+        flatindex=interp.invcorrespondence[x];
+        latind=flatindex[0]
+        lonind=flatindex[1]
+    # fill data with cortical features
+           
+        DATA[x,:]=data2D[latind,lonind,:]
+
+    
+    return DATA
+
+def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
+
+
+
+    #plt.imshow(img[0,:,:,0])
+    #plt.show()
+    #zeropadded=inv_slice(croppedrescale2,newH,newW,h,w)
+
+    SURFdata=invert_projection_test(img[0,:,:,:],coords,interp,newH,newW,lons)
+    if len(labels) > 0:
+        rescaledlabels = rescale_labels(labels, SURFdata)
+        print('rescaled shape', rescaledlabels.shape)
+        return rescaledlabels
+    else:
+        return SURFdata
 
 def project(DATAset, interp, nlats, nlons, lons):
     """
