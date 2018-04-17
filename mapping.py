@@ -198,7 +198,7 @@ def project(DATAset, interp, nlats, nlons, lons):
 
     return data
 
-def project_data(alllabels,alldata,allcorr,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_correlations,use_normalisation):
+def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalisation):
     """
          project labels, featuremaps and optionally feature-correlation maps onto 2D plan
 
@@ -220,39 +220,44 @@ def project_data(alllabels,alldata,allcorr,interp,outdir,newH,newW,lons,abr,aug,
          Returns
          -------
    """
-    twoDL = project(alllabels.DATA,interp,newH,newW,lons)
+   
+    # project data to 2D
+    alldata=DATA['data']
     twoD = project(alldata.DATA, interp, newH, newW, lons)
-    if use_correlations:
-        twoDcorr = project(allcorr.DATA,interp,newH,newW,lons)
 
-    #plt.imshow(twoDL[:,:,0])
-    #plt.show()
-    
-    
-    if usegroup==True:
-        np.save(os.path.join(outdir,abr +'GrayScaleLabels-group-aug-' + aug), twoDL[:,:,0])
+    if 'labels' in DATA: 
+        print('in project data, labels== true')
+        # if working with label files then also project these to 2D
+        twoDL = project(DATA['labels'],interp,newH,newW,lons)
+        if usegroup==True:
+            np.save(os.path.join(outdir,abr +'GrayScaleLabels-group-aug-' + aug), twoDL[:,:,0])
+            
+    if  'correlations'  in DATA: 
+        print('in project data, correlations== true')
+        # if using correlations with group maps then also project these to 2D
+        twoDcorr = project(DATA['correlations'],interp,newH,newW,lons)
         
     start=0    
     for subj in range(0,alldata.samples):
-        
-        if usegroup==False:
-            np.save(os.path.join(outdir,abr +'GrayScaleLabels-subj-'+ str(subj)+ '-aug-' + aug+'-Nature'), twoDL[:,:,subj])
+        print('subj', subj, DATA['data'].ids[subj] )
+        if 'labels' in DATA and usegroup==False:
+            np.save(os.path.join(outdir,abr +'GrayScaleLabels-subj-'+ DATA['data'].ids[subj] + '-aug-' + aug+'-Nature'), twoDL[:,:,subj])
 
-        if use_correlations:
-            np.save(os.path.join(outdir,abr +'featurecorrelations-subj-'+ str(subj)+ '-aug-' + aug), twoDcorr[:,:,subj])
+        if 'correlations'  in DATA:
+            np.save(os.path.join(outdir,abr +'featurecorrelations-subj-'+ DATA['data'].ids[subj] + '-aug-' + aug), twoDcorr[:,:,subj])
 
         if use_normalisation:
             normalised_data = normalize(twoD[:, :, start:start + alldata.features])
-            np.save(os.path.join(outdir, abr + 'data_-subj-' + str(subj) + '-aug-' + aug + 'normalised'),normalised_data)
+            np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug + 'normalised'),normalised_data)
         else:
-            np.save(os.path.join(outdir, abr + 'data_-subj-' + str(subj) + '-aug-' + aug), twoD[:, :, start:start + alldata.features])
+            np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug), twoD[:, :, start:start + alldata.features])
         start = start+alldata.features
 
-    if use_correlations:
+    if 'correlations'  in DATA:
         np.save(os.path.join(outdir,abr +'meanfeaturecorrelations-aug-' + aug), twoDcorr[:,:,alldata.samples])
 
 
-def write_projection_paths(samples, filename, indir, abr, aug, use_grouplabels, use_correlations,use_normalisation):
+def write_projection_paths(DATA, filename, indir, abr, aug, use_grouplabels, use_correlations,use_normalisation):
     """
         write paths out to file
 
@@ -262,7 +267,7 @@ def write_projection_paths(samples, filename, indir, abr, aug, use_grouplabels, 
          filename: output filename
          indir: path to data files
          aug: indexing projection centres
-         use_grouplabels: use group labels
+         use_grouplabels: ue group labels
          use_correlations: save featuremap correlations
 
          Returns
@@ -270,20 +275,21 @@ def write_projection_paths(samples, filename, indir, abr, aug, use_grouplabels, 
        """
     target = open(filename, 'w')
     
-    for subj in range(0,samples):
-                
+    for subj in range(0,DATA.samples):
+        print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
         if use_grouplabels == True:
             label = os.path.join(indir, abr + 'GrayScaleLabels-group-aug-' + aug +'.npy')
         else:
-            label = os.path.join(indir, abr + 'GrayScaleLabels-subj-' + str(subj)+ '-aug-' + aug + '-Nature.npy')
+            label = os.path.join(indir, abr + 'GrayScaleLabels-subj-' + DATA.ids[subj]+ '-aug-' + aug + '-Nature.npy')
 
         if use_normalisation:
-            data=os.path.join(indir, abr + 'data_-subj-' + str(subj)+ '-aug-' + aug+ 'normalised.npy')
+            print(os.path.join(indir, abr + 'data_-subj-' + DATA.ids[subj] + '-aug-' + aug+ 'normalised.npy'))
+            data=os.path.join(indir, abr + 'data_-subj-' + DATA.ids[subj] + '-aug-' + aug+ 'normalised.npy')
         else:
-            data = os.path.join(indir, abr + 'data_-subj-' + str(subj) + '-aug-' + aug + '.npy')
+            data = os.path.join(indir, abr + 'data_-subj-' +DATA.ids[subj]+ '-aug-' + aug + '.npy')
 
         if use_correlations:
-            corrdata=os.path.join(indir, abr + 'featurecorrelations-subj-' + str(subj)+ '-aug-' + aug + '.npy')
+            corrdata=os.path.join(indir, abr + 'featurecorrelations-subj-' +DATA.ids[subj] + '-aug-' + aug + '.npy')
             meancorrdata=os.path.join(indir, abr + 'meanfeaturecorrelations-aug-' + aug+'.npy')
             target.write(data + ' ' + label + ' ' + corrdata + ' ' + meancorrdata + '\n')
         else:

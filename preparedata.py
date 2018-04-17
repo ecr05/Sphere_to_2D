@@ -37,55 +37,66 @@ def get_datalists(datalist,Ldirname,Fdirname):
     """
 
 
-    DataMatrix = namedtuple('DataMatrix','DATA,samples,features') # namedtupele for holding and indexing all the data
+    DataMatrix = namedtuple('DataMatrix','DATA,ids,samples,features') # namedtupele for holding and indexing all the data
     trainingfunc = nibabel.load(os.path.join(Fdirname,datalist[1]+ paths.featuretype))
     numfeatures = trainingfunc.numDA
     numdatapoints = trainingfunc.darrays[0].data.shape[0];
 
-    dataset = DataMatrix(DATA=np.zeros((numdatapoints,(len(datalist)*numfeatures))),samples=len(datalist),features=numfeatures)
-    correlationset = DataMatrix(DATA=np.zeros((numdatapoints,(len(datalist)+1))),samples=len(datalist)+1,features=1)
+    dataset = DataMatrix(DATA=np.zeros((numdatapoints,(len(datalist)*numfeatures))),ids=[],samples=len(datalist),features=numfeatures)
+    
     
     start=0
-    if paths.usegrouplabels:
-        # use just one label for all subjects - projected onto subject featurespace through registration
-        label=nibabel.load(paths.labelname);
-        labelset = DataMatrix(DATA=np.zeros((numdatapoints,1)),samples=1,features=1)
-        labelset.DATA[:,0]=label.darrays[0].data
-        print('usegrouplabels',labelset.samples)
-
-    else:
-        # use single subject label files derived from Nature paper classifier
-        labelset = DataMatrix(DATA=np.zeros((numdatapoints,len(datalist))),samples=len(datalist),features=1)
-        print('use Nature labels')
+    if paths.use_labels:
+        if paths.usegrouplabels:
+            # use just one label for all subjects - projected onto subject featurespace through registration
+            label=nibabel.load(paths.labelname);
+            labelset = DataMatrix(DATA=np.zeros((numdatapoints,1)),samples=1,features=1)
+            labelset.DATA[:,0]=label.darrays[0].data
+            print('usegrouplabels',labelset.samples)
+    
+        else:
+            # use single subject label files derived from Nature paper classifier
+            labelset = np.zeros((numdatapoints,len(datalist)))
+            print('use Nature labels')
         
     for ind,name in enumerate(datalist):
-        #print(name,ind,len(datalist))
+        print(name,ind,len(datalist))
         func = nibabel.load(os.path.join(Fdirname, name + paths.featuretype))
-        if not paths.usegrouplabels:
+        if paths.use_labels and not paths.usegrouplabels:
             # fill label array with single subject labels
             label = nibabel.load(os.path.join(Ldirname,name+paths.subjlabelname))
-            labelset.DATA[:,ind] = label.darrays[0].data
+            labelset[:,ind] = label.darrays[0].data
 
         if paths.getFeatureCorrelations:
+            correlationset =np.zeros((numdatapoints,(len(datalist)+1)))
             # estimate correlation maps showing agreement of individual subject data with group
             corrdata = nibabel.load(os.path.join(Fdirname,name+paths.correlationtype))
 
-            correlationset.DATA[:,ind] = corrdata.darrays[0].data
+            correlationset[:,ind] = corrdata.darrays[0].data
         
         for d in range(0,func.numDA):
             # fill data array
             dataset.DATA[:,start+d] = func.darrays[d].data
-
+        dataset.ids.append(name)    
         start += numfeatures
 
     if paths.getFeatureCorrelations:
         corrdata = nibabel.load(os.path.join(Fdirname, paths.average_feature_correlations))
-        correlationset.DATA[:, len(datalist)] = corrdata.darrays[0].data
+        correlationset[:, len(datalist)] = corrdata.darrays[0].data
 
-    return dataset, labelset, correlationset
+    ALLDATA={}
+    ALLDATA['data']=dataset
+    
+    if paths.getFeatureCorrelations:
+        ALLDATA['correlations']=correlationset
+        
+    if paths.use_labels:
+        ALLDATA['labels']=labelset
+
+    return ALLDATA
     
     
-def project_data(data_set, label_set, correlation_set, interpolator, Odir, abr, aug):
+def project_data(DATA, interpolator, Odir, abr, aug):
     """
                project data from sphere to plane
 
@@ -106,7 +117,7 @@ def project_data(data_set, label_set, correlation_set, interpolator, Odir, abr, 
                -------
        """
     n_end = '.txt'
-    cm.project_data(label_set, data_set, correlation_set, interpolator, Odir, paths.resampleH, paths.resampleW,paths.lons, abr, aug, paths.usegrouplabels, paths.getFeatureCorrelations,paths.normalise)
+    cm.project_data(DATA, interpolator, Odir, paths.resampleH, paths.resampleW,paths.lons, abr, aug, paths.usegrouplabels,paths.normalise)
     if paths.normalise:
         n_end='normalised.txt'
 
@@ -116,6 +127,6 @@ def project_data(data_set, label_set, correlation_set, interpolator, Odir, abr, 
     else:
         filename = os.path.join(Odir, 'projections'+ aug+'Nature' +n_end)
 
-    cm.write_projection_paths(data_set.samples, filename, Odir, abr, aug,paths.usegrouplabels, paths.getFeatureCorrelations,paths.normalise)
+    cm.write_projection_paths(DATA['data'], filename, Odir, abr, aug,paths.usegrouplabels, paths.getFeatureCorrelations,paths.normalise)
 
 

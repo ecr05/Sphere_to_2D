@@ -20,16 +20,15 @@ coordinates=surf.darrays[0].data
 labels=nibabel.load(paths.labelname)
 
 # datasets
-datasets=[paths.training_paths, paths.validation_paths, paths.testing_paths]
+datasets=[paths.training_paths]#, paths.validation_paths, paths.testing_paths]
 
 # To ameliorate the effect of the projection distorting the feature space,
 # and to simulate the effect of data augmentation on the labels
 # optionally rotate the sphere to centre on a number of different label regions prior to projection
 # Therebye obtaining projections from different 'views'
 
-# first centre is point at zero longitude 90 degrees latitude
-zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2)
-ptinds=[zerocoord]
+zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2) # starting point of rotation
+ptinds=[]#zerocoord]
 
 # then rotate sphere to centre on different label regions
 for i in paths.projection_centres:
@@ -60,10 +59,13 @@ for aug, pt in enumerate(ptinds):
         print('get lists')
         if paths.usegrouplabels == True:
              # use group average labels for each subject (as used in Glasser et al. Nature 2016)
-             dataset, labelset, corrset = pd.get_datalists(i['list'], i['Ldir'], i['Fdir'])
+             DATA = pd.get_datalists(i['list'], i['Ldir'], i['Fdir'])
         else:
              # training on output of Nature paper classifier - learnt labels for each individual
-             dataset, labelset, corrset = pd.get_datalists(i['list'], i['Ldir'], i['Fdir'])
+             DATA = pd.get_datalists(i['list'], i['Ldir'], i['Fdir'])
 
+        if paths.group_normalise:
+            cm.group_normalise()
+            
         print('project data')
-        pd.project_data(dataset, labelset, corrset, NN, i['Odir'], i['abr'], str(aug))
+        pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres(aug)))
