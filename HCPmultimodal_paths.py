@@ -45,19 +45,19 @@ VALIDATION = os.path.join(validationdir,'VALIDATIONlist')
 
 training_paths = {'Fdir': os.path.normpath(trainingdir+ '/featuresets/'),
                   'Ldir': os.path.normpath(trainingdir+'/classifiedlabels/'),
-                  'Odir': os.path.normpath(trainingdir+ '/featuresets/projectedtest'),
+                  'Odir': os.path.normpath(trainingdir+ '/featuresets/projectedgrpnormtest'),
                   'list': np.genfromtxt(TRAINING , dtype=str),
                   'abr': 'TRAINING'}
 
 testing_paths = { 'Fdir': os.path.normpath(testingdir+ '/featuresets/'),
                   'Ldir': os.path.normpath(testingdir+'/classifiedlabels/'),
-                  'Odir': os.path.normpath(testingdir+ '/featuresets/projectedtest'),
+                  'Odir': os.path.normpath(testingdir+ '/featuresets/projectedgrpnormtest'),
                   'list': np.genfromtxt(TESTING , dtype=str),
                   'abr': 'TESTING'}
 
 validation_paths = {'Fdir': os.path.normpath(validationdir + '/featuresets/'),
                     'Ldir': os.path.normpath(validationdir + '/classifiedlabels/'),
-                    'Odir': os.path.normpath(validationdir + '/featuresets/projectedtest'),
+                    'Odir': os.path.normpath(validationdir + '/featuresets/projectedgrpnormtest'),
                     'list': np.genfromtxt(VALIDATION , dtype=str),
                     'abr': 'VALIDATION'}
 
@@ -77,5 +77,5 @@ lons = (delta_d*np.indices((resampleW,1))[0,:,:]) #edges of longitude bins
 use_labels=False
 usegrouplabels = False # use the group average labels for all subjects (projected onto each subjects feature space through registration as per Glasser et al, Nature 2016)
 getFeatureCorrelations = False #useful when using group labels as it can be used to filter training data (see Glasser et al, Nature 2016)
-normalise = True # necessary for old version
-group_normalise=False
+normalise = False # necessary for old version
+group_normalise=True

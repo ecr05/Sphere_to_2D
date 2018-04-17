@@ -24,7 +24,7 @@ def sliceplane(plane, start_height, start_width, x_size, y_size):
     return newdata
 
 
-def normalize(data):
+def normalize(data,norm_axis):
     """
         normalise feature maps
 
@@ -37,13 +37,14 @@ def normalize(data):
         datanormed : normalised data
     """
 
-    datastd = np.std(data,axis=(0,1))
-
+    datastd = np.std(data,axis=norm_axis)
+    print('in normalise', norm_axis, datastd.shape )
+    print('mean',np.mean(data,axis=norm_axis).shape )
     if np.where(datastd == 0)[0].shape != (0,):
         print('isnan')
         datastd[np.where(datastd==0)]=1;
 
-    datanormed = (data - np.mean(data,axis=(0,1))) / datastd
+    datanormed = (data - np.mean(data,axis=norm_axis)) / datastd
     if np.where(np.isnan(datanormed))[0].shape != (0,):
          print('isnan2')
 
@@ -170,6 +171,23 @@ def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
     else:
         return SURFdata
 
+
+def reformat_datamat(ALLDATA):
+    print('DATA shape', ALLDATA.DATA.shape, ALLDATA.DATA.shape[0],ALLDATA.samples,ALLDATA.features,type(ALLDATA.samples*ALLDATA.DATA.shape[0]),type(ALLDATA.features))
+    newmat=np.zeros((ALLDATA.samples*ALLDATA.DATA.shape[0],ALLDATA.features))
+    
+    for f in range(ALLDATA.features):
+        for s in range(ALLDATA.samples):
+            #print(f,s,'ALLDATA.DATA[:,f*s] shape',s*ALLDATA.DATA.shape[0],(s+1)*ALLDATA.DATA.shape[0],newmat.shape)
+            newmat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0],f]= ALLDATA.DATA[:,f*s]       
+    
+    return newmat
+
+def group_normalise(ALLDATA):
+    print('DATA shape', ALLDATA.DATA.shape)
+    newmat=reformat_datamat(ALLDATA)
+    normalize(newmat,0) # normalise along each column
+    
 def project(DATAset, interp, nlats, nlons, lons):
     """
           project points from sphere onto 2D grid
@@ -223,6 +241,7 @@ def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalis
    
     # project data to 2D
     alldata=DATA['data']
+    
     twoD = project(alldata.DATA, interp, newH, newW, lons)
 
     if 'labels' in DATA: 
