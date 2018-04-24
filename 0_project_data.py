@@ -69,4 +69,4 @@ for aug, pt in enumerate(ptinds):
             cm.group_normalise(DATA['data'])
             
         print('project data')
-        pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]))
+        #pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]))

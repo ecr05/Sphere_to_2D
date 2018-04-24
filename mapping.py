@@ -48,6 +48,10 @@ def normalize(data,norm_axis):
     if np.where(np.isnan(datanormed))[0].shape != (0,):
          print('isnan2')
 
+    print('mean normalised',np.mean(datanormed,axis=norm_axis))
+    print('std normalised',np.std(datanormed,axis=norm_axis))
+
+    
     return datanormed
 
 
@@ -172,8 +176,7 @@ def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
         return SURFdata
 
 
-def reformat_datamat(ALLDATA):
-    print('DATA shape', ALLDATA.DATA.shape, ALLDATA.DATA.shape[0],ALLDATA.samples,ALLDATA.features,type(ALLDATA.samples*ALLDATA.DATA.shape[0]),type(ALLDATA.features))
+def reformat_datamat_rows_to_columns(ALLDATA):
     newmat=np.zeros((ALLDATA.samples*ALLDATA.DATA.shape[0],ALLDATA.features))
     
     for f in range(ALLDATA.features):
@@ -183,11 +186,24 @@ def reformat_datamat(ALLDATA):
     
     return newmat
 
-def group_normalise(ALLDATA):
-    print('DATA shape', ALLDATA.DATA.shape)
-    newmat=reformat_datamat(ALLDATA)
-    normalize(newmat,0) # normalise along each column
+def reformat_datamat_columns_to_rows(datamat,ALLDATA):
+    newmat=np.zeros(ALLDATA.DATA.shape)
     
+    for f in range(ALLDATA.features):
+        for s in range(ALLDATA.samples):
+            #print(f,s,'datamat[s*ALLDATA.DATA.shape[0]:,f]',datamat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0],f].shape,newmat[:,f*s].shape)
+            newmat[:,f*s]= datamat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0]:,f]       
+    
+    return newmat
+
+def group_normalise(ALLDATA):
+
+    newmat=reformat_datamat_rows_to_columns(ALLDATA)
+    newmat=normalize(newmat,0) # normalise along each column
+    newmat=reformat_datamat_columns_to_rows(newmat,ALLDATA)
+    
+    ALLDATA._replace(DATA=newmat)
+
 def project(DATAset, interp, nlats, nlons, lons):
     """
           project points from sphere onto 2D grid
