@@ -11,17 +11,17 @@ import nibabel
 import mapping as cm
 import os
 import Interpolation as intp
-import HCPmultimodal_paths_dHCP as paths
+import dHCPmultimodal_paths as paths
 import matplotlib.pyplot as plt
 import pandas as pd
 
 normalised=False
-
+orig_data=False
 num_test=len(os.listdir(paths.outputdir))
 
 # load template data
 surf=nibabel.load(paths.surfname)
-template=nibabel.load(paths.templategiftiname)
+#template=nibabel.load(paths.templategiftiname)
 
 coordinates=surf.darrays[0].data
 
@@ -33,7 +33,7 @@ zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2)
 #if normalised:
 #    test_filenames =pd.read_pickle('/data/PROJECTS/dHCP/PROCESSED_DATA/githubv1.1/TESTINGDATA/featuresets/projectedvisL/TESTINGoutname-lookupnormalised.pk1')
 #else:
-test_filenames =pd.read_pickle('/data/PROJECTS/dHCP/PROCESSED_DATA/githubv1.1/TESTING_controls_nopreterms/featuresets/projectedMOTORAFFINE/TESTING_controlsoutname-regressionlookupL.pk1')
+test_filenames =pd.read_pickle(os.path.join(paths.bp_paths['Odir'],paths.bp_paths['csv']))
 # re-project data back from plane to sphere
 # do this for every projection view and merge results (**hack!**)
 ptinds=[]#zerocoord]
@@ -59,26 +59,35 @@ for aug in np.arange(len(ptinds)):
     for index, row in test_filenames.iterrows(): 
     
         uniquevals = []
-        fname =row['data']
-   #     fname = os.path.join( paths.testing_paths_2['Odir'],row['data']) # reproject normalised testing data
-        fname = os.path.join(paths.outputdir,paths.outputname + str(row['id'])+'_'+str(row['session']) + '.npy') # reproject autoencoder output
+        if orig_data==True:
+            fname =row['data']
+        else:
+            fname = os.path.join(paths.outputdir,paths.outputname + str(row['id'])+'_'+str(row['session']) + '.npy')
        
         print(row['id'],fname)
         img = np.load(fname)
-        plt.imshow(img[0,:,:,0])
+        
+        if orig_data==False:
+            img=img[0,:,:,:]
+           
+        
+            
+        plt.imshow(img[:,:,0])    
         plt.show()
         #img = cm.unpadd(img,[paths.resampleH, paths.resampleW, 1])
-
-        projection = cm.invert_patch_categories_full(img[0,:,:,:], coordinates, NN, paths.resampleH, paths.resampleW, paths.lons)
+        projection = cm.invert_patch_categories_full(img, coordinates, NN, paths.resampleH, paths.resampleW, paths.lons)
+        #projection = cm.invert_patch_categories_full(img[0,:,:,:], coordinates, NN, paths.resampleH, paths.resampleW, paths.lons)
 
         newgifti=nibabel.gifti.gifti.GiftiImage(header=None)
         
         for i in range(projection.shape[1]):
             newgifti.add_gifti_data_array(nibabel.gifti.gifti.GiftiDataArray(projection[:,i].astype('float32')))
         print(os.path.join(paths.outputdir, paths.outputname + 'subj-' + row['id']+ '-aug-' + str(aug) +'.func.gii'))
-        #nibabel.save(newgifti,os.path.join(paths.testing_paths_2['Odir'], 'TESTING' + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
-       
-        nibabel.save(newgifti, os.path.join(paths.outputdir, paths.outputname + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
+
+        if orig_data==True:
+            nibabel.save(newgifti,os.path.join(paths.training_paths['Odir'], 'TRAINING' + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
+        else:
+            nibabel.save(newgifti, os.path.join(paths.outputdir, paths.outputname + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
         
     
     

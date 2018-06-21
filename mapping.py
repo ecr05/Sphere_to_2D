@@ -166,8 +166,8 @@ def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
     #plt.imshow(img[0,:,:,0])
     #plt.show()
     #zeropadded=inv_slice(croppedrescale2,newH,newW,h,w)
-
-    SURFdata=invert_projection_test(img[0,:,:,:],coords,interp,newH,newW,lons)
+    SURFdata=invert_projection_test(img,coords,interp,newH,newW,lons)
+    #SURFdata=invert_projection_test(img[0,:,:,:],coords,interp,newH,newW,lons)
     if len(labels) > 0:
         rescaledlabels = rescale_labels(labels, SURFdata)
         print('rescaled shape', rescaledlabels.shape)
@@ -175,6 +175,9 @@ def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
     else:
         return SURFdata
 
+def remove_outliers(data):
+    print('data stats:', np.mean(data), np.std(data), np.max(data), np.mean(data),np.mean(data)+10*np.std(data))
+    
 
 def reformat_datamat_rows_to_columns(ALLDATA):
     newmat=np.zeros((ALLDATA.samples*ALLDATA.DATA.shape[0],ALLDATA.features))

@@ -7,7 +7,7 @@ import mapping as cm
 import preparedata as pd
 
 import Interpolation as intp
-import HCPmultimodal_paths as paths
+import dHCPmultimodal_paths as paths
 import os
 import copy
 
@@ -64,9 +64,11 @@ for aug, pt in enumerate(ptinds):
              # training on output of Nature paper classifier - learnt labels for each individual
              DATA = pd.get_datalists(i['list'], i['Ldir'], i['Fdir'])
 
-        DATAbefore=copy.deepcopy(DATA['data'].DATA)
-        if paths.group_normalise:
-            cm.group_normalise(DATA['data'])
-            
-        print('project data')
-        #pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]))
+# =============================================================================
+#         DATAbefore=copy.deepcopy(DATA['data'].DATA)
+#         if paths.group_normalise:
+#             cm.group_normalise(DATA['data'])
+#             
+#         print('project data')
+#         #pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]))
+# =============================================================================

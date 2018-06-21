@@ -13,7 +13,7 @@ import numpy as np
 import os
 import nibabel
 import copy
-import HCPmultimodal_paths as paths
+import dHCPmultimodal_paths as paths
 
 
 def get_datalists(datalist,Ldirname,Fdirname):
@@ -74,7 +74,11 @@ def get_datalists(datalist,Ldirname,Fdirname):
 
             correlationset[:,ind] = corrdata.darrays[0].data
         
+        
+            
         for d in range(0,func.numDA):
+            if paths.remove_outliers:
+                func.darrays[d].data=cm.remove_outliers(func.darrays[d].data)
             # fill data array
             dataset.DATA[:,start+d] = func.darrays[d].data
         dataset.ids.append(name)    
