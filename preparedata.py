@@ -78,7 +78,7 @@ def get_datalists(datalist,Ldirname,Fdirname):
             
         for d in range(0,func.numDA):
             if paths.remove_outliers:
-                func.darrays[d].data=cm.remove_outliers(func.darrays[d].data)
+                func.darrays[d].data=cm.remove_outliers(d, func.darrays[d].data)
             # fill data array
             dataset.DATA[:,start+d] = func.darrays[d].data
         dataset.ids.append(name)    

@@ -175,8 +175,11 @@ def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
     else:
         return SURFdata
 
-def remove_outliers(data):
-    print('data stats:', np.mean(data), np.std(data), np.max(data), np.mean(data),np.mean(data)+10*np.std(data))
+def remove_outliers(d,data):
+    # quick hack to get rid of xtreme outliers (before there was some really high values)
+    if  (np.max(data)>np.mean(data)+10*np.std(data)) or (np.min(data)<np.mean(data)-10*np.std(data)):
+        data[np.where(data>np.mean(data)+10*np.std(data))]= np.mean(data)
+        print(d,  'data stats:', np.mean(data), np.std(data), np.max(data), np.min(data),np.mean(data)+10*np.std(data))
     
 
 def reformat_datamat_rows_to_columns(ALLDATA):

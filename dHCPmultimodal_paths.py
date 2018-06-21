@@ -28,7 +28,7 @@ surfname = os.path.join(dirname,'week40.iter30.sphere.'+hemi_template+'.dedrift.
 
 
 # features - feature files should have form subjID+hemi+featuretype
-featuretype =  '_'+ hemi+ '_thickness_myelin_curv_norm.40week.AFFINE.func.gii'
+featuretype =  '_'+ hemi+ '_myelin_thickness_curvature.32k_fs_LR.func.gii'
 
 
 # name for the backprojected output from the deep learning
@@ -87,3 +87,4 @@ usegrouplabels = False # use the group average labels for all subjects (projecte
 getFeatureCorrelations = False #useful when using group labels as it can be used to filter training data (see Glasser et al, Nature 2016)
 normalise = False # necessary for old version
 group_normalise=True
+remove_outliers=True

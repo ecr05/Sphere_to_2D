@@ -11,11 +11,22 @@ import numpy as np
 import os
 
 demographics=pd.read_pickle('/data/PROJECTS/dHCP/demographics/dHCP_demographics_filtered30-01-18_days.pk1')
+datadir='/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/fsaverage_32k_data/separate_files'
 outdir='/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/DL_DATASETS/groups'
+remove_myelin=True
+
 # label premature babies
 demographics['is_prem']=(demographics['birth_ga'] < 34).astype(int)
 
-
+# filter out subjects with no myelin
+if remove_myelin == True:
+    demographics_no_myelin=pd.DataFrame()
+    for index, row in demographics.iterrows():
+        if os.path.isfile(os.path.join(datadir,'sub-' + str(row['id']) +'_ses-' + str(row['session']) + '_left_myelin_map.32k_fs_LR.func.gii')):
+            print(row['id'],row['session'])
+            demographics_no_myelin=demographics_no_myelin.append(row)
+    demographics_no_myelin['session']=demographics_no_myelin['session'].astype('int64')
+    demographics=demographics_no_myelin   
 # remove preterm subject's first scans (using rather ad hoc range which seeks to exclude twins born around 34 -35 weeks as premies)
 prems_firstscans=demographics.loc[(demographics['birth_ga'] < 34) & (demographics['scan_ga'] < 36)].drop_duplicates(subset='id', keep='first')
 prems_second_scans=demographics.loc[((demographics['birth_ga'] < 34) & (demographics['scan_ga'] > 36)) ].drop_duplicates(subset='id', keep='last')
@@ -41,11 +52,11 @@ TRAIN_prem_classification=pd.concat([TRAIN_prems, TRAIN_terms]).reset_index()
 
 TESTlist_premclass=[]
 for index, row in TEST_prem_classification.iterrows():
-    TESTlist_premclass.append('sub-'+ str(row['id'])+'-ses-' + str(row['session']) )
+    TESTlist_premclass.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
 
 TRAINlist_premclass=[]
 for index, row in TRAIN_prem_classification.iterrows():
-    TRAINlist_premclass.append('sub-'+ str(row['id'])+'-ses-' + str(row['session']) )
+    TRAINlist_premclass.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
     
 np.savetxt(os.path.join(outdir,'TEST_prem_vs_term.txt'),TESTlist_premclass,fmt='%s')
 np.savetxt(os.path.join(outdir,'TRAIN_prem_vs_term.txt'),TRAINlist_premclass,fmt='%s')
@@ -65,11 +76,11 @@ TRAIN_ga_regression=demographics_no_preterm_second_scans.loc[demographics_no_pre
 
 TESTlist_ga_regression=[]
 for index, row in TEST_ga_regression.iterrows():
-    TESTlist_ga_regression.append('sub-'+ str(row['id'])+'-ses-' + str(row['session']) )
+    TESTlist_ga_regression.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
 
 TRAINlist_ga_regression=[]
 for index, row in TRAIN_ga_regression.iterrows():
-    TRAINlist_ga_regression.append('sub-'+ str(row['id'])+'-ses-' + str(row['session']) )
+    TRAINlist_ga_regression.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
 
 np.savetxt(os.path.join(outdir,'TEST_ga_regression.txt'),TESTlist_ga_regression,fmt='%s')
 np.savetxt(os.path.join(outdir,'TRAIN_ga_regression.txt'),TRAINlist_ga_regression,fmt='%s')

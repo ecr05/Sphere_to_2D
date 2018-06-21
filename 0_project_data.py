@@ -71,4 +71,4 @@ for aug, pt in enumerate(ptinds):
 #             
 #         print('project data')
 #         #pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]))
-# =============================================================================
+# =====================ls ========================================================
