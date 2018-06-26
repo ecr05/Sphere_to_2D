@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-hemi='left'
+hemi='right'
 if hemi== 'left':
     hemi_template='L'
 else :
@@ -49,26 +49,34 @@ else:
     projection_centres=[15]
     
     
-training_paths = {'Ldir': os.path.normpath(testingdir+ '/labels/'),
+training_paths = {'Ldir': os.path.normpath(trainingdir+ '/labels/'),
                   'Fdir': os.path.normpath(trainingdir+ '/featuresets/'),
-                  'Odir': os.path.normpath(trainingdir+ '/featuresets/projectedcentre-'+ str(projection_centres[0])),
+                  'Odir': os.path.normpath(trainingdir+ '/featuresets/projectedcentre_'+ str(projection_centres[0])),
                   'list': np.genfromtxt(TRAINING , dtype=str),
-                  'csv': 'TRAIN_prem_vs_term.pk1',
+                  'meta_csv': os.path.join(trainingdir, 'TRAIN_prem_vs_term.pk1'),
+                  'data_csv': 'TRAIN_prem_vs_term_data_csv_'+hemi+'.pk1',
                   'abr': 'TRAINING'}
 
 testing_paths = { 'Ldir': os.path.normpath(testingdir+ '/labels/'),
                   'Fdir': os.path.normpath(testingdir+ '/featuresets/'),
-                  'Odir': os.path.normpath(testingdir+ '/featuresets/projectedcentre-'+ str(projection_centres[0])),
+                  'Odir': os.path.normpath(testingdir+ '/featuresets/projectedcentre_'+ str(projection_centres[0])),
                   'list': np.genfromtxt(TESTING , dtype=str),
+                  'meta_csv': os.path.join(testingdir,'TEST_prem_vs_term.pk1'),
+                  'data_csv':'TEST_prem_vs_term_data_csv_'+hemi+'.pk1',
                   'abr': 'TESTING'}
 
 # save projection centres
-np.savetxt(training_paths['Odir'],projection_centres)
-np.savetxt(testing_paths['Odir'],projection_centres)
+
+os.mkdir(training_paths['Odir'])
+os.mkdir(testing_paths['Odir'])
+
+
+np.savetxt(os.path.join(training_paths['Odir'],'projection_centres.txt'),projection_centres)
+np.savetxt(os.path.join(testing_paths['Odir'],'projection_centres.txt'),projection_centres)
 
 
 # for back projection debugging
-bp_paths=training_paths
+bp_paths=testing_paths
 
 
 # tuning parameters
@@ -87,4 +95,4 @@ usegrouplabels = False # use the group average labels for all subjects (projecte
 getFeatureCorrelations = False #useful when using group labels as it can be used to filter training data (see Glasser et al, Nature 2016)
 normalise = False # necessary for old version
 group_normalise=True
-remove_outliers=True
+remove_outliers=False

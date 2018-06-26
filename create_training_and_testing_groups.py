@@ -53,10 +53,14 @@ TRAIN_prem_classification=pd.concat([TRAIN_prems, TRAIN_terms]).reset_index()
 TESTlist_premclass=[]
 for index, row in TEST_prem_classification.iterrows():
     TESTlist_premclass.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
+    
+TEST_prem_classification['fileid']=TESTlist_premclass
 
 TRAINlist_premclass=[]
 for index, row in TRAIN_prem_classification.iterrows():
     TRAINlist_premclass.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
+ 
+TRAIN_prem_classification['fileid']=TRAINlist_premclass
     
 np.savetxt(os.path.join(outdir,'TEST_prem_vs_term.txt'),TESTlist_premclass,fmt='%s')
 np.savetxt(os.path.join(outdir,'TRAIN_prem_vs_term.txt'),TRAINlist_premclass,fmt='%s')
@@ -78,9 +82,14 @@ TESTlist_ga_regression=[]
 for index, row in TEST_ga_regression.iterrows():
     TESTlist_ga_regression.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
 
+TEST_ga_regression['fileid']=TESTlist_ga_regression
+
 TRAINlist_ga_regression=[]
 for index, row in TRAIN_ga_regression.iterrows():
     TRAINlist_ga_regression.append('sub-'+ str(row['id'])+'_ses-' + str(row['session']) )
+    
+TRAIN_ga_regression['fileid']=TRAINlist_ga_regression
+
 
 np.savetxt(os.path.join(outdir,'TEST_ga_regression.txt'),TESTlist_ga_regression,fmt='%s')
 np.savetxt(os.path.join(outdir,'TRAIN_ga_regression.txt'),TRAINlist_ga_regression,fmt='%s')

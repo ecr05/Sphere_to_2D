@@ -16,7 +16,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt 
 import Interpolation as intp
-
+import pandas as pd
 
 def sliceplane(plane, start_height, start_width, x_size, y_size):
     # slice patch from 3D array dim (x,y,channels)
@@ -178,8 +178,9 @@ def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
 def remove_outliers(d,data):
     # quick hack to get rid of xtreme outliers (before there was some really high values)
     if  (np.max(data)>np.mean(data)+10*np.std(data)) or (np.min(data)<np.mean(data)-10*np.std(data)):
+        print(d,  'data stats:', np.mean(data), np.std(data), np.max(data), np.min(data),np.mean(data)+10*np.std(data),np.mean(data)-10*np.std(data))
+
         data[np.where(data>np.mean(data)+10*np.std(data))]= np.mean(data)
-        print(d,  'data stats:', np.mean(data), np.std(data), np.max(data), np.min(data),np.mean(data)+10*np.std(data))
     
 
 def reformat_datamat_rows_to_columns(ALLDATA):
@@ -187,8 +188,8 @@ def reformat_datamat_rows_to_columns(ALLDATA):
     
     for f in range(ALLDATA.features):
         for s in range(ALLDATA.samples):
-            #print(f,s,'ALLDATA.DATA[:,f*s] shape',s*ALLDATA.DATA.shape[0],(s+1)*ALLDATA.DATA.shape[0],newmat.shape)
-            newmat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0],f]= ALLDATA.DATA[:,f*s]       
+            #print(f,s,'ALLDATA.DATA[:,f*s] shape',s*ALLDATA.DATA.shape[0],(s+1)*ALLDATA.DATA.shape[0],newmat.shape,ALLDATA.DATA.shape[0],ALLDATA.DATA[:,f*s].shape,newmat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0],f].shape)
+            newmat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0],f]= ALLDATA.DATA[:,s*ALLDATA.features+f]       
     
     return newmat
 
@@ -198,17 +199,35 @@ def reformat_datamat_columns_to_rows(datamat,ALLDATA):
     for f in range(ALLDATA.features):
         for s in range(ALLDATA.samples):
             #print(f,s,'datamat[s*ALLDATA.DATA.shape[0]:,f]',datamat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0],f].shape,newmat[:,f*s].shape)
-            newmat[:,f*s]= datamat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0]:,f]       
+            newmat[:,s*ALLDATA.features+f]= datamat[s*ALLDATA.DATA.shape[0]:(s+1)*ALLDATA.DATA.shape[0]:,f]       
     
     return newmat
 
 def group_normalise(ALLDATA):
+    """
+          normalise data across group; first restructures data s.t. all examples for each feature fit into one column
+          i.e. (n_subjects*n_vertices,n_features)
+          then it normalises and returns data to (n_vertices,n_subjects*n_features) format
 
+          Parameters
+          ----------
+          ALLDATA: data for all subjects in (n_vertices,n_subjects*n_features) format
+
+          Returns
+          -------
+          
+    """
+    #alldatamean=np.mean(ALLDATA.DATA,axis=0)
     newmat=reformat_datamat_rows_to_columns(ALLDATA)
     newmat=normalize(newmat,0) # normalise along each column
-    newmat=reformat_datamat_columns_to_rows(newmat,ALLDATA)
-    
-    ALLDATA._replace(DATA=newmat)
+    newmat2=reformat_datamat_columns_to_rows(newmat,ALLDATA)
+# =============================================================================
+#     diff=ALLDATA.DATA-newmat2
+#     print('diff',np.sum(diff))
+# =============================================================================
+    #print('group_normalise_mean',np.mean(newmat,axis=0))
+    #ALLDATA._replace(DATA=newmat)
+    return newmat2
 
 def project(DATAset, interp, nlats, nlons, lons):
     """
@@ -280,7 +299,7 @@ def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalis
         
     start=0    
     for subj in range(0,alldata.samples):
-        print('subj', subj, DATA['data'].ids[subj] )
+        #print('subj', subj, DATA['data'].ids[subj] )
         if 'labels' in DATA and usegroup==False:
             np.save(os.path.join(outdir,abr +'GrayScaleLabels-subj-'+ DATA['data'].ids[subj] + '-aug-' + aug+'-Nature'), twoDL[:,:,subj])
 
@@ -291,14 +310,20 @@ def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalis
             normalised_data = normalize(twoD[:, :, start:start + alldata.features])
             np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug + 'normalised'),normalised_data)
         else:
+# =============================================================================
+#             data=twoD[:, :, start:start + alldata.features].reshape((320x240,3))
+#             if np.sum(data,axis=0)
+# =============================================================================
+            
             np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug), twoD[:, :, start:start + alldata.features])
+            
         start = start+alldata.features
 
     if 'correlations'  in DATA:
         np.save(os.path.join(outdir,abr +'meanfeaturecorrelations-aug-' + aug), twoDcorr[:,:,alldata.samples])
 
 
-def write_projection_paths(DATA, filename, indir, abr, aug, use_grouplabels, use_correlations,use_normalisation):
+def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grouplabels, use_correlations,use_normalisation,meta_csv):
     """
         write paths out to file
 
@@ -314,14 +339,17 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_grouplabels, use
          Returns
          -------
        """
-    target = open(filename, 'w')
+    meta_data=pd.read_pickle(meta_csv)
     
+    df = pd.DataFrame() 
+    print('write projection paths')
     for subj in range(0,DATA.samples):
-        print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
-        if use_grouplabels == True:
-            label = os.path.join(indir, abr + 'GrayScaleLabels-group-aug-' + aug +'.npy')
-        else:
-            label = os.path.join(indir, abr + 'GrayScaleLabels-subj-' + DATA.ids[subj]+ '-aug-' + aug + '-Nature.npy')
+        #print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
+        if use_labels:
+            if use_grouplabels == True:
+                label = os.path.join(indir, abr + 'GrayScaleLabels-group-aug-' + aug +'.npy')
+            else:
+                label = os.path.join(indir, abr + 'GrayScaleLabels-subj-' + DATA.ids[subj]+ '-aug-' + aug + '-Nature.npy')
 
         if use_normalisation:
             print(os.path.join(indir, abr + 'data_-subj-' + DATA.ids[subj] + '-aug-' + aug+ 'normalised.npy'))
@@ -329,10 +357,25 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_grouplabels, use
         else:
             data = os.path.join(indir, abr + 'data_-subj-' +DATA.ids[subj]+ '-aug-' + aug + '.npy')
 
-        if use_correlations:
-            corrdata=os.path.join(indir, abr + 'featurecorrelations-subj-' +DATA.ids[subj] + '-aug-' + aug + '.npy')
-            meancorrdata=os.path.join(indir, abr + 'meanfeaturecorrelations-aug-' + aug+'.npy')
-            target.write(data + ' ' + label + ' ' + corrdata + ' ' + meancorrdata + '\n')
-        else:
-            target.write(data + ' ' + label + '\n')
-
+        row={};
+        row['fileid']=  DATA.ids[subj] 
+        row['data']= data
+        if use_labels:
+            row['labels']= label
+        
+        df = df.append(row, ignore_index=True)
+        
+    output=df.merge(meta_data, on=['fileid'])
+    output=output.drop(['fileid','index'], axis=1)
+    output.to_pickle(os.path.join(indir,filename))
+        
+    
+# =============================================================================
+#         if use_correlations:
+#             corrdata=os.path.join(indir, abr + 'featurecorrelations-subj-' +DATA.ids[subj] + '-aug-' + aug + '.npy')
+#             meancorrdata=os.path.join(indir, abr + 'meanfeaturecorrelations-aug-' + aug+'.npy')
+#             #target.write(data + ' ' + label + ' ' + corrdata + ' ' + meancorrdata + '\n')
+#         else:
+#             target.write(data + ' ' + label + '\n')
+# 
+# =============================================================================

@@ -16,14 +16,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 normalised=False
-orig_data=False
-num_test=len(os.listdir(paths.outputdir))
+orig_data=True
 
 # load template data
 surf=nibabel.load(paths.surfname)
 #template=nibabel.load(paths.templategiftiname)
+# load  labels - constant for all subjects - group parcellation
+labels=nibabel.load(paths.labelname)
 
 coordinates=surf.darrays[0].data
+
 
 # get cartesion coordinates for point at zero longitude 90 degrees latitude
 zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2)
@@ -33,7 +35,7 @@ zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2)
 #if normalised:
 #    test_filenames =pd.read_pickle('/data/PROJECTS/dHCP/PROCESSED_DATA/githubv1.1/TESTINGDATA/featuresets/projectedvisL/TESTINGoutname-lookupnormalised.pk1')
 #else:
-test_filenames =pd.read_pickle(os.path.join(paths.bp_paths['Odir'],paths.bp_paths['csv']))
+test_filenames =pd.read_pickle(os.path.join(paths.bp_paths['Odir'],paths.bp_paths['data_csv']))
 # re-project data back from plane to sphere
 # do this for every projection view and merge results (**hack!**)
 ptinds=[]#zerocoord]
@@ -41,7 +43,8 @@ ptinds=[]#zerocoord]
 # then rotate sphere to centre on different label regions
 for i in paths.projection_centres:
     print('projection centre:', i)
-    ptinds.append(coordinates[i])
+    x=np.where(labels.darrays[0].data==i)[0]
+    ptinds.append(coordinates[x[0]])
 
 # create array for each subject to save results of project
 
@@ -61,6 +64,7 @@ for aug in np.arange(len(ptinds)):
         uniquevals = []
         if orig_data==True:
             fname =row['data']
+            print('data',fname )
         else:
             fname = os.path.join(paths.outputdir,paths.outputname + str(row['id'])+'_'+str(row['session']) + '.npy')
        

@@ -67,6 +67,7 @@ def get_datalists(datalist,Ldirname,Fdirname):
             label = nibabel.load(os.path.join(Ldirname,name+paths.subjlabelname))
             labelset[:,ind] = label.darrays[0].data
 
+        # need to get rid of code for correlation naps - isn't being used!
         if paths.getFeatureCorrelations:
             correlationset =np.zeros((numdatapoints,(len(datalist)+1)))
             # estimate correlation maps showing agreement of individual subject data with group
@@ -77,7 +78,9 @@ def get_datalists(datalist,Ldirname,Fdirname):
         
             
         for d in range(0,func.numDA):
+            
             if paths.remove_outliers:
+                # this is really hacky - not recommended - need better way
                 func.darrays[d].data=cm.remove_outliers(d, func.darrays[d].data)
             # fill data array
             dataset.DATA[:,start+d] = func.darrays[d].data
@@ -100,7 +103,7 @@ def get_datalists(datalist,Ldirname,Fdirname):
     return ALLDATA
     
     
-def project_data(DATA, interpolator, Odir, abr, aug):
+def project_data(DATA, interpolator, Odir, abr, aug,meta_csv,data_csv):
     """
                project data from sphere to plane
 
@@ -108,29 +111,29 @@ def project_data(DATA, interpolator, Odir, abr, aug):
                Parameters
                ----------
                data_set         : struct containing single subject featuresets
-               label_set        : struct containing label files
-               correlation_set  : struct containing correlation maps
-                                  (showing agreement between subject data and that of group)
                interpolator     : links spherical mesh grid points to coordinates on 2D project
                                   (currently only nearest neighbour available)
-               Odir             : output directory
+               Ofile            : output file
                abr              : file naming convention
                aug              : numerical indexing of files by augmentation
 
                Returns
                -------
        """
-    n_end = '.txt'
+    
     cm.project_data(DATA, interpolator, Odir, paths.resampleH, paths.resampleW,paths.lons, abr, aug, paths.usegrouplabels,paths.normalise)
+    
     if paths.normalise:
-        n_end='normalised.txt'
+        data_csv.replace('.pk1', 'normalised.pk1')
 
 
-    if paths.usegrouplabels:
-        filename = os.path.join(Odir, 'projections'+ aug+n_end)
-    else:
-        filename = os.path.join(Odir, 'projections'+ aug+'Nature' +n_end)
-
-    cm.write_projection_paths(DATA['data'], filename, Odir, abr, aug,paths.usegrouplabels, paths.getFeatureCorrelations,paths.normalise)
+# =============================================================================
+#     if paths.usegrouplabels:
+#         filename = os.path.join(Odir, 'projections'+ aug+n_end)
+#     else:
+#         filename = os.path.join(Odir, 'projections'+ aug+'Nature' +n_end)
+# 
+# =============================================================================
+    cm.write_projection_paths(DATA['data'], data_csv, Odir, abr, aug,paths.use_labels,paths.usegrouplabels, paths.getFeatureCorrelations,paths.normalise,meta_csv)
 
 

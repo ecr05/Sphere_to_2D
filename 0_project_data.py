@@ -20,7 +20,7 @@ coordinates=surf.darrays[0].data
 labels=nibabel.load(paths.labelname)
 
 # datasets
-datasets=[paths.training_paths]#, paths.validation_paths, paths.testing_paths]
+datasets=[paths.training_paths,paths.testing_paths]#, paths.validation_paths, 
 
 # To ameliorate the effect of the projection distorting the feature space,
 # and to simulate the effect of data augmentation on the labels
@@ -52,10 +52,7 @@ for aug, pt in enumerate(ptinds):
 
     for i in datasets:
 
-        if not os.path.exists(i['Odir']):
-             print('mkdir')
-             os.mkdir(i['Odir'])
-
+       
         print('get lists')
         if paths.usegrouplabels == True:
              # use group average labels for each subject (as used in Glasser et al. Nature 2016)
@@ -64,11 +61,10 @@ for aug, pt in enumerate(ptinds):
              # training on output of Nature paper classifier - learnt labels for each individual
              DATA = pd.get_datalists(i['list'], i['Ldir'], i['Fdir'])
 
-# =============================================================================
-#         DATAbefore=copy.deepcopy(DATA['data'].DATA)
-#         if paths.group_normalise:
-#             cm.group_normalise(DATA['data'])
-#             
-#         print('project data')
-#         #pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]))
-# =====================ls ========================================================
+
+        #DATAbefore=copy.deepcopy(DATA['data'].DATA)
+        if paths.group_normalise:
+             DATA['data']=DATA['data']._replace(DATA=cm.group_normalise(DATA['data']))
+
+        print('project data')
+        pd.project_data(DATA, NN, i['Odir'], i['abr'], str(paths.projection_centres[aug]), i['meta_csv'],i['data_csv'])
