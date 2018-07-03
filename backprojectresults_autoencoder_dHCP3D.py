@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 normalised=False
-orig_data=True
+orig_data=False
 
 # load template data
 surf=nibabel.load(paths.surfname)
@@ -86,11 +86,13 @@ for aug in np.arange(len(ptinds)):
         
         for i in range(projection.shape[1]):
             newgifti.add_gifti_data_array(nibabel.gifti.gifti.GiftiDataArray(projection[:,i].astype('float32')))
-        print(os.path.join(paths.outputdir, paths.outputname + 'subj-' + row['id']+ '-aug-' + str(aug) +'.func.gii'))
+        
 
         if orig_data==True:
+            print('save',os.path.join(paths.training_paths['Odir'], 'TRAINING' + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
             nibabel.save(newgifti,os.path.join(paths.training_paths['Odir'], 'TRAINING' + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
         else:
+            print(os.path.join(paths.outputdir, paths.outputname + 'subj-' + row['id']+ '-aug-' + str(aug) +'.func.gii'))
             nibabel.save(newgifti, os.path.join(paths.outputdir, paths.outputname + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
         
     

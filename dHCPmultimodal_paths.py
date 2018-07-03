@@ -10,7 +10,7 @@ else :
 basedirname = '/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/DL_DATASETS'
 trainingdir = os.path.join(basedirname,'TRAIN_prem_vs_term')
 testingdir = os.path.join(basedirname,'TEST_prem_vs_term')
-outputdir='' # output of deep learning 
+outputdir='/data/PROCESSED_DATA/PROJECTS/dHCP/AUTOENCODER/NETWORKS/SPLIT/test_split_new_data_dltkunet_5levels_bn_2/output_wholeimage_train' # output of deep learning 
 
 # define path to group data
 dirname = '/data/PROJECTS/dHCP/PROCESSED_DATA/TEMPLATES/new_surface_template/'
@@ -55,7 +55,7 @@ training_paths = {'Ldir': os.path.normpath(trainingdir+ '/labels/'),
                   'list': np.genfromtxt(TRAINING , dtype=str),
                   'meta_csv': os.path.join(trainingdir, 'TRAIN_prem_vs_term.pk1'),
                   'data_csv': 'TRAIN_prem_vs_term_data_csv_'+hemi+'.pk1',
-                  'abr': 'TRAINING'}
+                  'abr': 'TRAINING_'+hemi}
 
 testing_paths = { 'Ldir': os.path.normpath(testingdir+ '/labels/'),
                   'Fdir': os.path.normpath(testingdir+ '/featuresets/'),
@@ -63,12 +63,14 @@ testing_paths = { 'Ldir': os.path.normpath(testingdir+ '/labels/'),
                   'list': np.genfromtxt(TESTING , dtype=str),
                   'meta_csv': os.path.join(testingdir,'TEST_prem_vs_term.pk1'),
                   'data_csv':'TEST_prem_vs_term_data_csv_'+hemi+'.pk1',
-                  'abr': 'TESTING'}
+                  'abr': 'TESTING_'+hemi}
 
 # save projection centres
-
-os.mkdir(training_paths['Odir'])
-os.mkdir(testing_paths['Odir'])
+if not os.path.exists(training_paths['Odir']):
+    os.mkdir(training_paths['Odir'])
+    
+if not os.path.exists(testing_paths['Odir']):    
+    os.mkdir(testing_paths['Odir'])
 
 
 np.savetxt(os.path.join(training_paths['Odir'],'projection_centres.txt'),projection_centres)
@@ -76,7 +78,7 @@ np.savetxt(os.path.join(testing_paths['Odir'],'projection_centres.txt'),projecti
 
 
 # for back projection debugging
-bp_paths=testing_paths
+bp_paths=training_paths
 
 
 # tuning parameters

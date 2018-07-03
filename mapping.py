@@ -344,7 +344,7 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grou
     df = pd.DataFrame() 
     print('write projection paths')
     for subj in range(0,DATA.samples):
-        #print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
+        print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
         if use_labels:
             if use_grouplabels == True:
                 label = os.path.join(indir, abr + 'GrayScaleLabels-group-aug-' + aug +'.npy')
@@ -364,7 +364,14 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grou
             row['labels']= label
         
         df = df.append(row, ignore_index=True)
-        
+    
+# =============================================================================
+#     print('df shape', df.shape)
+#     print(df)   
+#     print('meta shape', meta_data.shape)
+#     print(meta_data)   
+# =============================================================================
+    
     output=df.merge(meta_data, on=['fileid'])
     output=output.drop(['fileid','index'], axis=1)
     output.to_pickle(os.path.join(indir,filename))

@@ -37,10 +37,10 @@ demographics_no_preterm_second_scans=demographics.loc[demographics.isin(prems_se
 
 # now randomly sample from the prems group and the term subjects
 
-TEST_prems=prems_second_scans.sample(frac=0.15)
+TEST_prems=prems_second_scans.sample(frac=0.15,random_state=42)
 TRAIN_prems=prems_second_scans.loc[prems_second_scans.isin(TEST_prems)['session']==False]
 
-TEST_terms=demographics_terms.sample(frac=0.05)
+TEST_terms=demographics_terms.sample(frac=0.05,random_state=42)
 TRAIN_terms=demographics_terms.loc[demographics_terms.isin(TEST_terms)['session']==False]
 
 # merge prem and term components together to give one test and train list
@@ -73,7 +73,7 @@ TRAIN_prem_classification.to_pickle(os.path.join(outdir,'TRAIN_prem_vs_term.pk1'
 # merge prem first scans and term 
 # now randomly sample from the prems group and the term subjects
 
-TEST_ga_regression=demographics_no_preterm_second_scans.sample(frac=0.07)
+TEST_ga_regression=demographics_no_preterm_second_scans.sample(frac=0.07,random_state=42)
 TRAIN_ga_regression=demographics_no_preterm_second_scans.loc[demographics_no_preterm_second_scans.isin(TEST_ga_regression)['session']==False]
 
 # create subject lists 

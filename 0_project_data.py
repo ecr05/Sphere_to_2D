@@ -52,7 +52,10 @@ for aug, pt in enumerate(ptinds):
 
     for i in datasets:
 
-       
+        if not os.path.exists(i['Odir']):
+             print('mkdir')
+             os.mkdir(i['Odir'])
+
         print('get lists')
         if paths.usegrouplabels == True:
              # use group average labels for each subject (as used in Glasser et al. Nature 2016)
