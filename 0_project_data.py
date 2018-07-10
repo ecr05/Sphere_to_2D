@@ -7,7 +7,7 @@ import mapping as cm
 import preparedata as pd
 
 import Interpolation as intp
-import dHCPmultimodal_paths as paths
+import dHCPmultimodal_paths_ga as paths
 import os
 import copy
 

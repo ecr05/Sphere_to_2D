@@ -47,6 +47,8 @@ TRAIN_terms=demographics_terms.loc[demographics_terms.isin(TEST_terms)['session'
 
 TEST_prem_classification=pd.concat([TEST_prems, TEST_terms]).reset_index()
 TRAIN_prem_classification=pd.concat([TRAIN_prems, TRAIN_terms]).reset_index()
+TEST_prem_classification=TEST_prem_classification.drop(['index'], axis=1)
+TRAIN_prem_classification=TRAIN_prem_classification.drop(['index'], axis=1)
 
 # create subject lists 
 

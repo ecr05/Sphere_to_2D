@@ -365,15 +365,13 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grou
         
         df = df.append(row, ignore_index=True)
     
-# =============================================================================
-#     print('df shape', df.shape)
-#     print(df)   
-#     print('meta shape', meta_data.shape)
-#     print(meta_data)   
-# =============================================================================
+    print('df shape', df.shape)
+    print(df)   
+    print('meta shape', meta_data.shape)
+    print(meta_data)   
     
     output=df.merge(meta_data, on=['fileid'])
-    output=output.drop(['fileid','index'], axis=1)
+    output=output.drop(['fileid'], axis=1)
     output.to_pickle(os.path.join(indir,filename))
         
     

@@ -13,7 +13,7 @@ import numpy as np
 import os
 import nibabel
 import copy
-import dHCPmultimodal_paths as paths
+import dHCPmultimodal_paths_ga as paths
 
 
 def get_datalists(datalist,Ldirname,Fdirname):
