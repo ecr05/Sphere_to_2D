@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 normalised=False
-orig_data=False
+orig_data=True
 
 # load template data
 surf=nibabel.load(paths.surfname)
@@ -89,8 +89,8 @@ for aug in np.arange(len(ptinds)):
         
 
         if orig_data==True:
-            print('save',os.path.join(paths.training_paths['Odir'], 'TRAINING' + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
-            nibabel.save(newgifti,os.path.join(paths.training_paths['Odir'], 'TRAINING' + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
+            print('save',os.path.join(paths.bp_paths['Odir'], paths.bp_paths['abr'] + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
+            nibabel.save(newgifti,os.path.join(paths.bp_paths['Odir'],paths.bp_paths['abr'] + str(row['id'])+'_'+str(row['session']) +'.func.gii'))
         else:
             print(os.path.join(paths.outputdir, paths.outputname + 'subj-' + row['id']+ '-aug-' + str(aug) +'.func.gii'))
             nibabel.save(newgifti, os.path.join(paths.outputdir, paths.outputname + str(row['id'])+'_'+str(row['session']) +'.func.gii'))

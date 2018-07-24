@@ -7,7 +7,7 @@ import mapping as cm
 import preparedata as pd
 
 import Interpolation as intp
-import dHCPmultimodal_paths_ga as paths
+import dHCPmultimodal_paths as paths
 import os
 import copy
 
@@ -20,7 +20,7 @@ coordinates=surf.darrays[0].data
 labels=nibabel.load(paths.labelname)
 
 # datasets
-datasets=[paths.training_paths,paths.testing_paths]#, paths.validation_paths, 
+datasets=[paths.training_paths,paths.testing_paths]#, paths.validation_paths,
 
 # To ameliorate the effect of the projection distorting the feature space,
 # and to simulate the effect of data augmentation on the labels

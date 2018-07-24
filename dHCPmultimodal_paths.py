@@ -1,16 +1,18 @@
 import os
 import numpy as np
 
-hemi='right'
+filetag='all_files'
+
+hemi='left'
 if hemi== 'left':
     hemi_template='L'
 else :
      hemi_template='R'
 
 basedirname = '/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/DL_DATASETS'
-trainingdir = os.path.join(basedirname,'TRAIN_prem_vs_term')
-testingdir = os.path.join(basedirname,'TEST_prem_vs_term')
-outputdir='/data/PROCESSED_DATA/PROJECTS/dHCP/AUTOENCODER/NETWORKS/SPLIT/test_split_new_data_dltkunet_5levels_bn_2/output_wholeimage_train' # output of deep learning 
+trainingdir = os.path.join(basedirname,'TRAIN_prem_vs_term'+filetag)
+testingdir = os.path.join(basedirname,'TEST_prem_vs_term'+filetag)
+outputdir='/data/PROCESSED_DATA/PROJECTS/dHCP/prem_classification_050718/output_wholeimage' # output of deep learning 
 
 # define path to group data
 dirname = '/data/PROJECTS/dHCP/PROCESSED_DATA/TEMPLATES/new_surface_template/'
@@ -28,15 +30,16 @@ surfname = os.path.join(dirname,'week40.iter30.sphere.'+hemi_template+'.dedrift.
 
 
 # features - feature files should have form subjID+hemi+featuretype
-featuretype =  '_'+ hemi+ '_myelin_thickness_curvature.32k_fs_LR.func.gii'
+#featuretype =  '_'+ hemi+ '_myelin_thickness_curvature.32k_fs_LR.func.gii'
+featuretype =  '_'+ hemi+ '_thickness_curvature_dummy_myelin.32k_fs_LR.func.gii'
 
 
 # name for the backprojected output from the deep learning
 outputname = 'output'
 
 # define training, validation and test directories and paths
-TRAINING = os.path.join(trainingdir,'TRAIN_prem_vs_term.txt')
-TESTING = os.path.join(testingdir,'TEST_prem_vs_term.txt')
+TRAINING = os.path.join(trainingdir,'TRAIN_prem_vs_term'+filetag+'.txt')
+TESTING = os.path.join(testingdir,'TEST_prem_vs_term'+filetag+'.txt')
 
 # optionally define additional label regions on which to centre the sphere prior to projection
 #Occipital = 16 (L) and 15 (R)
@@ -53,7 +56,7 @@ training_paths = {'Ldir': os.path.normpath(trainingdir+ '/labels/'),
                   'Fdir': os.path.normpath(trainingdir+ '/featuresets/'),
                   'Odir': os.path.normpath(trainingdir+ '/featuresets/projectedcentre_'+ str(projection_centres[0])),
                   'list': np.genfromtxt(TRAINING , dtype=str),
-                  'meta_csv': os.path.join(trainingdir, 'TRAIN_prem_vs_term.pk1'),
+                  'meta_csv': os.path.join(trainingdir, 'TRAIN_prem_vs_term'+filetag+'.pk1'),
                   'data_csv': 'TRAIN_prem_vs_term_data_csv_'+hemi+'.pk1',
                   'abr': 'TRAINING_'+hemi}
 
@@ -61,7 +64,7 @@ testing_paths = { 'Ldir': os.path.normpath(testingdir+ '/labels/'),
                   'Fdir': os.path.normpath(testingdir+ '/featuresets/'),
                   'Odir': os.path.normpath(testingdir+ '/featuresets/projectedcentre_'+ str(projection_centres[0])),
                   'list': np.genfromtxt(TESTING , dtype=str),
-                  'meta_csv': os.path.join(testingdir,'TEST_prem_vs_term.pk1'),
+                  'meta_csv': os.path.join(testingdir,'TEST_prem_vs_term'+filetag+'.pk1'),
                   'data_csv':'TEST_prem_vs_term_data_csv_'+hemi+'.pk1',
                   'abr': 'TESTING_'+hemi}
 
@@ -78,7 +81,7 @@ np.savetxt(os.path.join(testing_paths['Odir'],'projection_centres.txt'),projecti
 
 
 # for back projection debugging
-bp_paths=training_paths
+bp_paths=testing_paths
 
 
 # tuning parameters
