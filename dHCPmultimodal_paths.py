@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-filetag='all_files'
+filetag=''
 
 hemi='left'
 if hemi== 'left':
@@ -9,7 +9,7 @@ if hemi== 'left':
 else :
      hemi_template='R'
 
-basedirname = '/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/DL_DATASETS'
+basedirname = '/data/PROJECTS/dHCP/PROCESSED_DATA/reconstructions_june2018/DL_DATASETS_new'
 trainingdir = os.path.join(basedirname,'TRAIN_prem_vs_term'+filetag)
 testingdir = os.path.join(basedirname,'TEST_prem_vs_term'+filetag)
 outputdir='/data/PROCESSED_DATA/PROJECTS/dHCP/prem_classification_050718/output_wholeimage' # output of deep learning 
@@ -30,8 +30,8 @@ surfname = os.path.join(dirname,'week40.iter30.sphere.'+hemi_template+'.dedrift.
 
 
 # features - feature files should have form subjID+hemi+featuretype
-#featuretype =  '_'+ hemi+ '_myelin_thickness_curvature.32k_fs_LR.func.gii'
-featuretype =  '_'+ hemi+ '_thickness_curvature_dummy_myelin.32k_fs_LR.func.gii'
+featuretype =  '_'+ hemi+ '_myelin_thickness_curvature.32k_fs_LR.func.gii'
+#featuretype =  '_'+ hemi+ '_thickness_curvature_dummy_myelin.32k_fs_LR.func.gii'
 
 
 # name for the backprojected output from the deep learning
