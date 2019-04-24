@@ -8,15 +8,12 @@ Created on Wed Dec 14 19:37:30 2016
 
 from collections import namedtuple
 import mapping as cm
-import matplotlib.pyplot as plt 
 import numpy as np
 import os
 import nibabel
-import copy
-import HCPmultimodal_paths as paths
 
 
-def get_datalists(datalist,Ldirname,Fdirname):
+def get_datalists(datalist,dirname):
 
 
     """
@@ -25,15 +22,13 @@ def get_datalists(datalist,Ldirname,Fdirname):
             Parameters
             ----------
             datalist : list of subject ids
-            Ldirname : path to labels directory
-            Fdirname : path to features
-            getcorr : estimate correlations between subject feature maps and the group average
+            dirname : path to input directory
 
             Returns
             -------
             dataset : named tuple containing feature data
             labelset: named tuple containing label data
-            correlationset: named tuple containing correlation maps
+        
     """
 
 
