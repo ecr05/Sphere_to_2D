@@ -38,7 +38,7 @@ def normalize(data,norm_axis):
     """
 
     datastd = np.std(data,axis=norm_axis)
-    print('in normalise', norm_axis, datastd.shape )
+    print('in normalise', data.shape ,norm_axis, datastd.shape )
     print('mean',np.mean(data,axis=norm_axis).shape )
     if np.where(datastd == 0)[0].shape != (0,):
         print('isnan')
@@ -307,7 +307,8 @@ def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalis
             np.save(os.path.join(outdir,abr +'featurecorrelations-subj-'+ DATA['data'].ids[subj] + '-aug-' + aug), twoDcorr[:,:,subj])
 
         if use_normalisation:
-            normalised_data = normalize(twoD[:, :, start:start + alldata.features])
+            print('use normalisation')
+            normalised_data = normalize(twoD[:, :, start:start + alldata.features],1)
             np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug + 'normalised'),normalised_data)
         else:
 # =============================================================================
@@ -366,12 +367,13 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grou
         df = df.append(row, ignore_index=True)
     
     print('df shape', df.shape)
-    print(df)   
+    df['fileid']=df['fileid'].astype(int)
     print('meta shape', meta_data.shape)
-    print(meta_data)   
+    meta_data['fileid']=meta_data['fileid'].astype(int)
+
     
     output=df.merge(meta_data, on=['fileid'])
-    output=output.drop(['fileid'], axis=1)
+    #output=output.drop(['fileid'], axis=1)
     output.to_pickle(os.path.join(indir,filename))
         
     

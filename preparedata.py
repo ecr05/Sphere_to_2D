@@ -13,7 +13,7 @@ import numpy as np
 import os
 import nibabel
 import copy
-import dHCPmultimodal_paths as paths
+import HCPmultimodal_paths as paths
 
 
 def get_datalists(datalist,Ldirname,Fdirname):
@@ -66,15 +66,6 @@ def get_datalists(datalist,Ldirname,Fdirname):
             # fill label array with single subject labels
             label = nibabel.load(os.path.join(Ldirname,name+paths.subjlabelname))
             labelset[:,ind] = label.darrays[0].data
-
-        # need to get rid of code for correlation naps - isn't being used!
-        if paths.getFeatureCorrelations:
-            correlationset =np.zeros((numdatapoints,(len(datalist)+1)))
-            # estimate correlation maps showing agreement of individual subject data with group
-            corrdata = nibabel.load(os.path.join(Fdirname,name+paths.correlationtype))
-
-            correlationset[:,ind] = corrdata.darrays[0].data
-        
         
             
         for d in range(0,func.numDA):
@@ -87,15 +78,10 @@ def get_datalists(datalist,Ldirname,Fdirname):
         dataset.ids.append(name)    
         start += numfeatures
 
-    if paths.getFeatureCorrelations:
-        corrdata = nibabel.load(os.path.join(Fdirname, paths.average_feature_correlations))
-        correlationset[:, len(datalist)] = corrdata.darrays[0].data
 
     ALLDATA={}
     ALLDATA['data']=dataset
     
-    if paths.getFeatureCorrelations:
-        ALLDATA['correlations']=correlationset
         
     if paths.use_labels:
         ALLDATA['labels']=labelset
