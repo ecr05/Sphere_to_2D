@@ -11,9 +11,30 @@ import mapping as cm
 import numpy as np
 import os
 import nibabel
+import glob
 
+def get_idlist(regularexpression):
+    
+    """
+        get subject ids from files
 
-def get_datalists(datalist,dirname):
+        Parameters
+        ----------
+        regularexpression : regular expression for data files
+
+        Returns
+        -------
+        idlist : list of subject ids
+        
+    """
+    
+    filenames=glob.glob(regularexpression)
+    ids=[idn.replace('/data/PROJECTS/HCP/HCP_PARCELLATION/TRAININGDATA/featuresets/', '') for idn in filenames]
+    ids=[idn.replace('.L.MultiModal_Features_MSMAll_2_d41_WRN_DeDrift.FULLVISUO.32k_fs_LR.func.gii', '') for idn in ids]
+    
+    return ids;
+
+def get_datalists(use_labels, paths):
 
 
     """
@@ -21,8 +42,7 @@ def get_datalists(datalist,dirname):
 
             Parameters
             ----------
-            datalist : list of subject ids
-            dirname : path to input directory
+            paths : dictionary with data paths
 
             Returns
             -------
@@ -30,45 +50,35 @@ def get_datalists(datalist,dirname):
             labelset: named tuple containing label data
         
     """
-
+    
+   
+    datalist=paths['list']
 
     DataMatrix = namedtuple('DataMatrix','DATA,ids,samples,features') # namedtupele for holding and indexing all the data
-    trainingfunc = nibabel.load(os.path.join(Fdirname,datalist[1]+ paths.featuretype))
+    trainingfunc = nibabel.load(paths['fname'].replace('%subjid%',datalist[1]))
     numfeatures = trainingfunc.numDA
     numdatapoints = trainingfunc.darrays[0].data.shape[0];
 
+    # create named tuple for data files
     dataset = DataMatrix(DATA=np.zeros((numdatapoints,(len(datalist)*numfeatures))),ids=[],samples=len(datalist),features=numfeatures)
     
     
     start=0
-    if paths.use_labels:
-        if paths.usegrouplabels:
-            # use just one label for all subjects - projected onto subject featurespace through registration
-            label=nibabel.load(paths.labelname);
-            labelset = DataMatrix(DATA=np.zeros((numdatapoints,1)),samples=1,features=1)
-            labelset.DATA[:,0]=label.darrays[0].data
-            print('usegrouplabels',labelset.samples)
-    
-        else:
-            # use single subject label files derived from Nature paper classifier
-            labelset = np.zeros((numdatapoints,len(datalist)))
-            print('use Nature labels')
+    if use_labels:
+        # create datamatrix for all label files
+        labelset = np.zeros((numdatapoints,len(datalist)))
         
     for ind,name in enumerate(datalist):
         print(name,ind,len(datalist))
-        func = nibabel.load(os.path.join(Fdirname, name + paths.featuretype))
-        if paths.use_labels and not paths.usegrouplabels:
+        func = nibabel.load(paths['fname'].replace('%subjid%',name))
+        if use_labels:
             # fill label array with single subject labels
-            label = nibabel.load(os.path.join(Ldirname,name+paths.subjlabelname))
+            label = nibabel.load(paths['lname'].replace('%subjid%',name))
             labelset[:,ind] = label.darrays[0].data
         
             
         for d in range(0,func.numDA):
-            
-            if paths.remove_outliers:
-                # this is really hacky - not recommended - need better way
-                func.darrays[d].data=cm.remove_outliers(d, func.darrays[d].data)
-            # fill data array
+            #fill data array
             dataset.DATA[:,start+d] = func.darrays[d].data
         dataset.ids.append(name)    
         start += numfeatures
@@ -78,13 +88,13 @@ def get_datalists(datalist,dirname):
     ALLDATA['data']=dataset
     
         
-    if paths.use_labels:
+    if use_labels:
         ALLDATA['labels']=labelset
 
     return ALLDATA
     
     
-def project_data(DATA, interpolator, Odir, abr, aug,meta_csv,data_csv):
+def project_data(DATA, interpolator,data_paths,resampleH,resampleW,use_labels,normalise):
     """
                project data from sphere to plane
 
@@ -94,18 +104,19 @@ def project_data(DATA, interpolator, Odir, abr, aug,meta_csv,data_csv):
                data_set         : struct containing single subject featuresets
                interpolator     : links spherical mesh grid points to coordinates on 2D project
                                   (currently only nearest neighbour available)
-               Ofile            : output file
-               abr              : file naming convention
-               aug              : numerical indexing of files by augmentation
+               paths            : dictionary with data paths
 
                Returns
                -------
        """
     
-    cm.project_data(DATA, interpolator, Odir, paths.resampleH, paths.resampleW,paths.lons, abr, aug, paths.usegrouplabels,paths.normalise)
     
-    if paths.normalise:
-        data_csv.replace('.pk1', 'normalised.pk1')
+    cm.project_data(DATA, interpolator, data_paths, resampleH, resampleW,normalise)
+    
+    if normalise:
+        csv_outname=os.path.join(data_paths['outdir'],data_paths['abr']+'normalised.pk1')
+    else:
+        csv_outname=os.path.join(data_paths['outdir'],data_paths['abr']+'.pk1')
 
 
 # =============================================================================
@@ -115,6 +126,6 @@ def project_data(DATA, interpolator, Odir, abr, aug,meta_csv,data_csv):
 #         filename = os.path.join(Odir, 'projections'+ aug+'Nature' +n_end)
 # 
 # =============================================================================
-    cm.write_projection_paths(DATA['data'], data_csv, Odir, abr, aug,paths.use_labels,paths.usegrouplabels, paths.getFeatureCorrelations,paths.normalise,meta_csv)
+    cm.write_projection_paths(DATA['data'], csv_outname, data_paths,use_labels,normalise)
 
 

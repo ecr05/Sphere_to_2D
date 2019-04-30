@@ -257,7 +257,7 @@ def project(DATAset, interp, nlats, nlons, lons):
 
     return data
 
-def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalisation):
+def project_data(DATA,interp,data_paths,newH,newW,use_normalisation):
     """
          project labels, featuremaps and optionally feature-correlation maps onto 2D plan
 
@@ -279,7 +279,9 @@ def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalis
          Returns
          -------
    """
-   
+    delta_d=2.*np.pi/(newW-1); # width of longitude bin if w not in  randw2:s
+    lons = (delta_d*np.indices((newW,1))[0,:,:]) #edges of longitude bins
+    
     # project data to 2D
     alldata=DATA['data']
     
@@ -289,39 +291,26 @@ def project_data(DATA,interp,outdir,newH,newW,lons,abr,aug,usegroup,use_normalis
         print('in project data, labels== true')
         # if working with label files then also project these to 2D
         twoDL = project(DATA['labels'],interp,newH,newW,lons)
-        if usegroup==True:
-            np.save(os.path.join(outdir,abr +'GrayScaleLabels-group-aug-' + aug), twoDL[:,:,0])
-            
-    if  'correlations'  in DATA: 
-        print('in project data, correlations== true')
-        # if using correlations with group maps then also project these to 2D
-        twoDcorr = project(DATA['correlations'],interp,newH,newW,lons)
         
     start=0    
     for subj in range(0,alldata.samples):
         #print('subj', subj, DATA['data'].ids[subj] )
-        if 'labels' in DATA and usegroup==False:
-            np.save(os.path.join(outdir,abr +'GrayScaleLabels-subj-'+ DATA['data'].ids[subj] + '-aug-' + aug+'-Nature'), twoDL[:,:,subj])
-
-        if 'correlations'  in DATA:
-            np.save(os.path.join(outdir,abr +'featurecorrelations-subj-'+ DATA['data'].ids[subj] + '-aug-' + aug), twoDcorr[:,:,subj])
+        if 'labels' in DATA :
+            np.save(os.path.join(data_paths['Odirname'],data_paths['abr'] +'GrayScaleLabels-subj-'+ DATA['data'].ids[subj] + '-Nature'), twoDL[:,:,subj])
 
         if use_normalisation:
             print('use normalisation')
             normalised_data = normalize(twoD[:, :, start:start + alldata.features],1)
-            np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug + 'normalised'),normalised_data)
+            np.save(os.path.join(data_paths['Odirname'],data_paths['abr'] + 'data_-subj-' + DATA['data'].ids[subj]  + 'normalised'),normalised_data)
         else:
 # =============================================================================
 #             data=twoD[:, :, start:start + alldata.features].reshape((320x240,3))
 #             if np.sum(data,axis=0)
 # =============================================================================
             
-            np.save(os.path.join(outdir, abr + 'data_-subj-' + DATA['data'].ids[subj]  + '-aug-' + aug), twoD[:, :, start:start + alldata.features])
+            np.save(os.path.join(data_paths['Odirname'], data_paths['abr'] + 'data_-subj-' + DATA['data'].ids[subj]), twoD[:, :, start:start + alldata.features])
             
         start = start+alldata.features
-
-    if 'correlations'  in DATA:
-        np.save(os.path.join(outdir,abr +'meanfeaturecorrelations-aug-' + aug), twoDcorr[:,:,alldata.samples])
 
 
 def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grouplabels, use_correlations,use_normalisation,meta_csv):
