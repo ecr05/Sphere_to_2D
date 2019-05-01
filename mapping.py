@@ -38,8 +38,8 @@ def normalize(data,norm_axis):
     """
 
     datastd = np.std(data,axis=norm_axis)
-    print('in normalise', data.shape ,norm_axis, datastd.shape )
-    print('mean',np.mean(data,axis=norm_axis).shape )
+   # print('in normalise', data.shape ,norm_axis, datastd.shape )
+   # print('mean',np.mean(data,axis=norm_axis).shape )
     if np.where(datastd == 0)[0].shape != (0,):
         print('isnan')
         datastd[np.where(datastd==0)]=1;
@@ -48,8 +48,8 @@ def normalize(data,norm_axis):
     if np.where(np.isnan(datanormed))[0].shape != (0,):
          print('isnan2')
 
-    print('mean normalised',np.mean(datanormed,axis=norm_axis))
-    print('std normalised',np.std(datanormed,axis=norm_axis))
+    #print('mean normalised',np.mean(datanormed,axis=norm_axis))
+    #print('std normalised',np.std(datanormed,axis=norm_axis))
 
     
     return datanormed
@@ -296,24 +296,24 @@ def project_data(DATA,interp,data_paths,newH,newW,use_normalisation):
     for subj in range(0,alldata.samples):
         #print('subj', subj, DATA['data'].ids[subj] )
         if 'labels' in DATA :
-            np.save(os.path.join(data_paths['Odirname'],data_paths['abr'] +'GrayScaleLabels-subj-'+ DATA['data'].ids[subj] + '-Nature'), twoDL[:,:,subj])
-
+            np.save(os.path.join(data_paths['Odirname'],data_paths['abr'] +'GrayScaleLabels-subj-'+ DATA['data'].ids[subj]), twoDL[:,:,subj])
+        
         if use_normalisation:
-            print('use normalisation')
-            normalised_data = normalize(twoD[:, :, start:start + alldata.features],1)
-            np.save(os.path.join(data_paths['Odirname'],data_paths['abr'] + 'data_-subj-' + DATA['data'].ids[subj]  + 'normalised'),normalised_data)
+            data_normed=normalize(np.reshape(twoD[:, :, start:start + alldata.features],(twoD.shape[0]*twoD.shape[1],alldata.features)),0)
+           # print(data_normed.shape,np.std(data_normed,0).shape,np.std(data_normed,0),np.mean(data_normed,0))
+
+            data=np.reshape(data_normed,twoD[:, :, start:start + alldata.features].shape)
         else:
-# =============================================================================
-#             data=twoD[:, :, start:start + alldata.features].reshape((320x240,3))
-#             if np.sum(data,axis=0)
-# =============================================================================
-            
-            np.save(os.path.join(data_paths['Odirname'], data_paths['abr'] + 'data_-subj-' + DATA['data'].ids[subj]), twoD[:, :, start:start + alldata.features])
+            data=twoD[:, :, start:start + alldata.features]
+        
+      
+        np.save(os.path.join(data_paths['Odirname'], data_paths['abr'] + 'data_-subj-' + DATA['data'].ids[subj]), data)
             
         start = start+alldata.features
+    
 
 
-def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grouplabels, use_correlations,use_normalisation,meta_csv):
+def write_projection_paths(DATA, filename, data_paths, use_labels, use_normalisation):
     """
         write paths out to file
 
@@ -329,23 +329,18 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grou
          Returns
          -------
        """
-    meta_data=pd.read_pickle(meta_csv)
+       
+       
     
     df = pd.DataFrame() 
     print('write projection paths')
     for subj in range(0,DATA.samples):
-        print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
+        #print('subj', subj, DATA.ids[subj],type(DATA.ids[subj]) )        
         if use_labels:
-            if use_grouplabels == True:
-                label = os.path.join(indir, abr + 'GrayScaleLabels-group-aug-' + aug +'.npy')
-            else:
-                label = os.path.join(indir, abr + 'GrayScaleLabels-subj-' + DATA.ids[subj]+ '-aug-' + aug + '-Nature.npy')
+                label = os.path.join(data_paths['Odirname'], data_paths['abr'] + 'GrayScaleLabels-subj-' + DATA.ids[subj]+ '.npy')
 
-        if use_normalisation:
-            print(os.path.join(indir, abr + 'data_-subj-' + DATA.ids[subj] + '-aug-' + aug+ 'normalised.npy'))
-            data=os.path.join(indir, abr + 'data_-subj-' + DATA.ids[subj] + '-aug-' + aug+ 'normalised.npy')
-        else:
-            data = os.path.join(indir, abr + 'data_-subj-' +DATA.ids[subj]+ '-aug-' + aug + '.npy')
+      
+        data = os.path.join(data_paths['Odirname'], data_paths['abr'] + 'data_-subj-' +DATA.ids[subj]+  '.npy')
 
         row={};
         row['fileid']=  DATA.ids[subj] 
@@ -355,15 +350,20 @@ def write_projection_paths(DATA, filename, indir, abr, aug, use_labels, use_grou
         
         df = df.append(row, ignore_index=True)
     
-    print('df shape', df.shape)
+   # print('df shape', df.shape)
     df['fileid']=df['fileid'].astype(int)
-    print('meta shape', meta_data.shape)
-    meta_data['fileid']=meta_data['fileid'].astype(int)
-
     
-    output=df.merge(meta_data, on=['fileid'])
+    if data_paths['meta_csv'] is not None:
+        meta_data=pd.read_pickle(data_paths['meta_csv'])
+
+       # print('meta shape', meta_data.shape)
+        meta_data['fileid']=meta_data['fileid'].astype(int)
+        output=df.merge(meta_data, on=['fileid'])
+    else:
+        output=df
+        
     #output=output.drop(['fileid'], axis=1)
-    output.to_pickle(os.path.join(indir,filename))
+    output.to_pickle(os.path.join(data_paths['Odirname'],filename))
         
     
 # =============================================================================

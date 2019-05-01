@@ -44,7 +44,7 @@ def project_data(args, data_paths):
          print('create output directory')
          os.mkdir(paths['Odirname'])
 
-    DATA = pr.get_datalists(args.use_labels,data_paths)
+    DATA = pr.get_datalists(args.use_labels,args.normalise,data_paths)
 
     if args.group_normalise:
          DATA['data']=DATA['data']._replace(DATA=cm.group_normalise(DATA['data']))
@@ -75,20 +75,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     if args.idlist:
-        print('read idlist',args.idlist)
         idlist=np.genfromtxt(args.idlist, dtype=str)
     else:
-        print('get id list')
         idlist=pr.get_idlist( args.featname.replace('%subjid%','*'))
-    print('len', len(idlist),idlist[0],idlist[len(idlist)-1])
         
     if args.use_labels:
         if args.subjlabel==None:
             raise ValueError('if using subj labels you must supply a value to the --subjlabel argument') 
         else:
             labelname=args.subjlabel
-      
-    print(args.surfname)
+    
+    if args.normalise and args.group_normalise:
+         raise ValueError('Error do not supply both normalise and group_normalise arguments')
+         
 
     paths = { 'Odirname': args.outdir,
              'fname': args.featname,

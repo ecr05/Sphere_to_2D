@@ -34,7 +34,7 @@ def get_idlist(regularexpression):
     
     return ids;
 
-def get_datalists(use_labels, paths):
+def get_datalists(use_labels, normalise,paths):
 
 
     """
@@ -79,7 +79,14 @@ def get_datalists(use_labels, paths):
             
         for d in range(0,func.numDA):
             #fill data array
-            dataset.DATA[:,start+d] = func.darrays[d].data
+# =============================================================================
+#             if normalise:
+#                 subjdata_d=cm.normalize(func.darrays[d].data,0)
+#             else:
+#                 subjdata_d=func.darrays[d].data
+# =============================================================================
+                
+            dataset.DATA[:,start+d] =func.darrays[d].data# subjdata_d
         dataset.ids.append(name)    
         start += numfeatures
 
@@ -112,11 +119,6 @@ def project_data(DATA, interpolator,data_paths,resampleH,resampleW,use_labels,no
     
     
     cm.project_data(DATA, interpolator, data_paths, resampleH, resampleW,normalise)
-    
-    if normalise:
-        csv_outname=os.path.join(data_paths['outdir'],data_paths['abr']+'normalised.pk1')
-    else:
-        csv_outname=os.path.join(data_paths['outdir'],data_paths['abr']+'.pk1')
 
 
 # =============================================================================
@@ -126,6 +128,6 @@ def project_data(DATA, interpolator,data_paths,resampleH,resampleW,use_labels,no
 #         filename = os.path.join(Odir, 'projections'+ aug+'Nature' +n_end)
 # 
 # =============================================================================
-    cm.write_projection_paths(DATA['data'], csv_outname, data_paths,use_labels,normalise)
+    cm.write_projection_paths(DATA['data'], os.path.join(data_paths['Odirname'],data_paths['abr']+'.pk1'), data_paths,use_labels,normalise)
 
 
