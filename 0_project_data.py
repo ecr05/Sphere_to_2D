@@ -84,16 +84,22 @@ if __name__ == '__main__':
             raise ValueError('if using subj labels you must supply a value to the --subjlabel argument') 
         else:
             labelname=args.subjlabel
+    else:
+        labelname=None
     
     if args.normalise and args.group_normalise:
          raise ValueError('Error do not supply both normalise and group_normalise arguments')
          
-
+    if  args.group_normalise:
+        args.outname=args.outname + '_gnorm_'
+    elif args.normalise:
+        args.outname=args.outname + '_norm_'
+        
     paths = { 'Odirname': args.outdir,
              'fname': args.featname,
              'lname': labelname,
              'list': idlist,
              'meta_csv': args.meta,
-             'abr': args.outname}
+             'abr': args.outname + '_centre_' + str(args.projection_centre)}
 
     project_data(args,paths)

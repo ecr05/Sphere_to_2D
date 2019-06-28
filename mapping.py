@@ -55,6 +55,7 @@ def normalize(data,norm_axis):
     return datanormed
 
 
+
 def rodrigues_rotation(origin,newpt):
     """
             rotate sphere to move longitude 0, latitude 45 degrees to a new position centred on the newpt
@@ -349,15 +350,15 @@ def write_projection_paths(DATA, filename, data_paths, use_labels, use_normalisa
             row['labels']= label
         
         df = df.append(row, ignore_index=True)
-    
+    print('types',df['fileid'].dtype)    
    # print('df shape', df.shape)
-    df['fileid']=df['fileid'].astype(int)
+#    df['fileid']=df['fileid'].astype(int)
     
     if data_paths['meta_csv'] is not None:
         meta_data=pd.read_pickle(data_paths['meta_csv'])
-
+        print('types',type(meta_data['fileid']),type(df['fileid'])) 
        # print('meta shape', meta_data.shape)
-        meta_data['fileid']=meta_data['fileid'].astype(int)
+        meta_data['fileid']=meta_data['fileid'].astype(object)
         output=df.merge(meta_data, on=['fileid'])
     else:
         output=df
