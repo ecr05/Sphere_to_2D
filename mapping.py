@@ -143,7 +143,7 @@ def zero_labels(labels,labelfunc):
     
     return func,newlabel
 
-def invert_projection_test(data2D,coords,interp,nlats,nlons,lons):
+def invert_projection_test(data2D,coords,interp):
  
     
     DATA=np.zeros((coords.shape[0],data2D.shape[2]))
@@ -160,14 +160,14 @@ def invert_projection_test(data2D,coords,interp,nlats,nlons,lons):
     
     return DATA
 
-def invert_patch_categories_full(img,coords,interp,newH,newW,lons,labels=[]):
+def invert_patch_categories_full(img,coords,interp,newH,newW,labels=[]):
 
 
 
     #plt.imshow(img[0,:,:,0])
     #plt.show()
     #zeropadded=inv_slice(croppedrescale2,newH,newW,h,w)
-    SURFdata=invert_projection_test(img,coords,interp,newH,newW,lons)
+    SURFdata=invert_projection_test(img,coords,interp)
     #SURFdata=invert_projection_test(img[0,:,:,:],coords,interp,newH,newW,lons)
     if len(labels) > 0:
         rescaledlabels = rescale_labels(labels, SURFdata)

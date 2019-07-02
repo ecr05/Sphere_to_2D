@@ -11,63 +11,84 @@ import nibabel
 import mapping as cm
 import os
 import Interpolation as intp
-import HCPmultimodal_paths as paths
+import argparse
+from PIL import Image
 
-num_test=len(os.listdir(paths.outputdir))
+def load_image_file(fname):
+    
+    if fname.find('npy') != -1: 
+        img = np.load(args.fname)
+    elif fname.find('jpg') != -1 or  fname.find('png') != -1:
+        img=np.asarray(Image.open(fname).convert('L'))
+    else:
+        f_list=np.loadtxt(fname,dtype='str')
+        img=load_image_file(f_list[0])
+        for f in f_list[1:]:
+            img=np.dstack((img,load_image_file(f)))
+            
+    if img.ndim < 3:
+        img=np.expand_dims(img,axis=2)
+        
+    print('img size', img.shape,img.ndim)    
+    
+    return img
+def reproject_data(args):
+    
+    # load file
+    
+    img=load_image_file(args.fname)
+    
+    # load template data
+    surf=nibabel.load(args.surfname)
+    func=nibabel.load(args.funcname)
+    coordinates=surf.darrays[0].data
 
-# load template data
-surf=nibabel.load(paths.surfname)
-template=nibabel.load(paths.templategiftiname)
-labels=nibabel.load(paths.labelname)
-
-coordinates=surf.darrays[0].data
-
-# get cartesion coordinates for point at zero longitude 90 degrees latitude
-zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2)
-
-# re-project data back from plane to sphere
-# do this for every projection view and merge results (**hack!**)
-ptinds = [zerocoord]
-
-aug = 0
-for i in paths.projection_centres:
-    x=np.where(labels.darrays[0].data == i)[0]
-    ptinds.append(coordinates[x[0]])
-
-# create array for each subject to save results of project
-augmentations=[]
-for subj in range(0, num_test):
-    newlabels = np.zeros((coordinates.shape[0],len(ptinds)))
-    augmentations.append(newlabels)
-
-for aug in np.arange(len(ptinds)):
-    print('aug',aug)
-    ROT = cm.rodrigues_rotation(ptinds[aug], zerocoord)  # get rotation matrix from current centre to 0 longitude
+    if args.templatelabel:
+        # find projection centre from group label file
+        labels=nibabel.load(args.templatelabel)
+        zerocoord=intp.spherical_to_cartesian(100,0,np.pi/2) # starting point of rotation
+        x=np.where(labels.darrays[0].data==args.projection_centre)[0]
+    else:
+        x=args.projection_centre
+        
+    # re-project data back from plane to sphere
+    rotation_centre=coordinates[x[0]]
+      
+    ROT = cm.rodrigues_rotation(rotation_centre, zerocoord)  # get rotation matrix from current centre to 0 longitude
     coordinates2 = cm.rotate(ROT,coordinates)
     # nearest neighbour interpolator for mapping spherical data to 2D plane
-    NN=intp.Interpolation(paths.resampleH, paths.resampleW, 20, 10)
+    NN=intp.Interpolation(args.resampleH, args.resampleW, 20, 10)
     NN.get_neighbourhoods(coordinates2)
     NN.get_inv_neighbourhoods(coordinates2)
 
-    for subj in range(1, num_test+1):
     
-        uniquevals = []
+    #img = cm.unpadd(img,[paths.resampleH, paths.resampleW, 1])
+
+    projection = cm.invert_patch_categories_full(img, coordinates, NN, args.resampleH, args.resampleW)
+    if projection.shape[1]==1:
+        func.darrays[0].data=projection.astype('float32')
+    else:
+        func.darrays[0].data=projection[:,0].astype('float32')
+        for i in range(1,projection.shape[-1]):
+            func.add_gifti_data_array(nibabel.gifti.GiftiDataArray(projection[:,i].astype('float32')))
+            
     
-        fname = os.path.join(paths.outputdir,'outputsubj-'+str(subj)+'-aug-visnormalised.npy')
-        print(subj,fname)
-        img = np.load(fname)
-        #img = cm.unpadd(img,[paths.resampleH, paths.resampleW, 1])
+    print('save')
+    nibabel.save(func, args.oname)
 
-        projection = cm.invert_patch_categories_full(img, coordinates, NN, paths.resampleH, paths.resampleW, paths.lons)
+if __name__ == '__main__':
 
-        augmentations[subj][:,aug] = projection[:,0]
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Example: project labels back from 2D to surface')
+    parser.add_argument('surfname',  help='template surface compatible with metric file')
+    parser.add_argument('funcname',  help='template metric file or list of files')
+    parser.add_argument('fname',  help='name of file to back_project')
+    parser.add_argument('oname',  help='output name')
+    parser.add_argument('--templatelabel',  help='template regional label file (for definition of projection center)')
+    parser.add_argument('--projection_centre',  help='region to be used as project centre', default='0',type=int)
+    parser.add_argument('--resampleH', help='height of projection',default=240)
+    parser.add_argument('--resampleW', help='width of projection',default=320)
+    
+    args = parser.parse_args()
 
-# now merge results from different projections into one single view
-final_labels = np.zeros((coordinates.shape[0], 29))
-
-for subj in range(0, paths.num_test):
-    newgifti=
-    final_labels[:, subj] = cm.label_fusion(augmentations[subj])
-    labels.add_gifti_data_array(nibabel.gifti.GiftiDataArray(final_labels[:, subj].astype('float32')))
-
-nibabel.save(labels, os.path.join(paths.outputdir, paths.outputname))
+    reproject_data(args)
